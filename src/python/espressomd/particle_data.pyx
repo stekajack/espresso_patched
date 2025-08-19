@@ -831,7 +831,8 @@ cdef class ParticleHandle:
                     return egg_model_params
 
             def get_axis(self):
-                cdef Vector3d axis = get_particle_axis(self.particle_data)
+                cdef Vector3d axis 
+                axis = get_particle_axis(self.particle_data)
                 return array_locked([axis[0],axis[1],axis[2]])
 
     IF DIPOLES:

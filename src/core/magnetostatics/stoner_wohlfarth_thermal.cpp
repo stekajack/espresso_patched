@@ -266,13 +266,13 @@ void System::System::integrate_magnetodynamics() {
     if (not p_ref) {
       return;
     }
-    assert(thermostat->thermo_switch & THERMO_LANGEVIN);
-    auto const &langevin = *thermostat->langevin;
+    assert(thermostat.thermo_switch != THERMO_OFF);
     auto const e_k = p_ref->calc_director();
     auto const ext_fld_dpl = ext_fld + p.dip_fld();
     auto const random_ints =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
-            langevin.rng_counter(), langevin.rng_seed(), p.id());
+            thermostat.get_philox_counter(), thermostat.get_philox_seed(),
+            p.id());
     auto const noise = Utils::uniform(random_ints[0]);
     if (ext_fld_dpl.norm2() == 0.) {
       stoner_wohlfarth_no_field(p, e_k, kT, noise);

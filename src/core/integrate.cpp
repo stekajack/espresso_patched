@@ -48,6 +48,7 @@
 #include "lb/particle_coupling.hpp"
 #include "lb/utils.hpp"
 #include "lees_edwards/lees_edwards.hpp"
+#include "magnetostatics/stoner_wohlfarth_thermal.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "npt.hpp"
 #include "rattle.hpp"

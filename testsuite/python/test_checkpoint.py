@@ -62,7 +62,6 @@ class CheckpointTest(ut.TestCase):
     checkpoint.load(0)
     checkpoint.save(1)
     n_nodes = system.cell_system.get_state()["n_nodes"]
-    has_any_thermostat = not system.thermostat.call_method("is_off")
 
     @classmethod
     def setUpClass(cls):

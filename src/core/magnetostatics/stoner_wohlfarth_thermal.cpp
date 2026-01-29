@@ -271,7 +271,7 @@ void System::System::integrate_magnetodynamics() {
     auto const ext_fld_dpl = ext_fld + p.dip_fld();
     auto const random_ints =
         Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
-            thermostat.get_philox_counter(), thermostat.get_philox_seed(),
+            thermostat->get_philox_counter(), thermostat->get_philox_seed(),
             p.id());
     auto const noise = Utils::uniform(random_ints[0]);
     if (ext_fld_dpl.norm2() == 0.) {

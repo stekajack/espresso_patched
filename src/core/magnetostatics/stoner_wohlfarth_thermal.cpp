@@ -26,6 +26,7 @@
 #include "cells.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/HomogeneousMagneticField.hpp"
+#include "constraints/OscillatingMagneticField.hpp"
 #include "errorhandling.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
@@ -149,20 +150,29 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
 }
 
 /**
- * @brief Collect external homogeneous magnetic field from active constraints.
+ * @brief Collect external magnetic field from active constraints.
  *
- * Iterate over constraints and sum the homogeneous magnetic field vectors
- * provided by @ref Constraints::HomogeneousMagneticField objects.
+ * Iterate over constraints and sum the field vectors provided by homogeneous
+ * and oscillating magnetic field constraints at the given simulation time.
  *
- * @return The total external homogeneous magnetic field.
+ * @param constraints Collection of constraints.
+ * @param time Current simulation time.
+ * @return The total external magnetic field.
  */
-static auto get_external_field(Constraints::Constraints const &constraints) {
+static auto get_external_field(Constraints::Constraints const &constraints,
+                               double time) {
   using HomogeneousMagneticField = ::Constraints::HomogeneousMagneticField;
+  using OscillatingMagneticField = ::Constraints::OscillatingMagneticField;
   Utils::Vector3d ext_fld = {0., 0., 0.};
   for (auto const &constraint : constraints) {
     auto ptr = std::dynamic_pointer_cast<HomogeneousMagneticField>(constraint);
     if (ptr) {
       ext_fld += ptr->H();
+    }
+    auto osc_ptr =
+        std::dynamic_pointer_cast<OscillatingMagneticField>(constraint);
+    if (osc_ptr) {
+      ext_fld += osc_ptr->field_at(time);
     }
   }
   return ext_fld;
@@ -256,7 +266,7 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
  */
 void System::System::integrate_magnetodynamics() {
   // collect HomogeneousMagneticFields if active
-  auto const ext_fld = get_external_field(*constraints);
+  auto const ext_fld = get_external_field(*constraints, get_sim_time());
   auto const kT = thermostat->kT;
   cell_structure->for_each_local_particle([&](Particle &p) {
     if (not p.is_virtual() or not p.stoner_wohlfarth_is_enabled()) {

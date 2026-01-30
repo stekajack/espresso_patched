@@ -107,7 +107,10 @@ enum DataPart : unsigned {
 #ifdef ESPRESSO_BOND_CONSTRAINT
   DATA_PART_RATTLE = 32u, /**< Particle::rattle */
 #endif
-  DATA_PART_BONDS = 64u /**< Particle::bonds */
+  DATA_PART_BONDS = 64u, /**< Particle::bonds */
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  DATA_PART_DIPFLD = 128u /**< Particle::dip_fld */
+#endif
 };
 } // namespace Cells
 
@@ -549,6 +552,18 @@ public:
    * @brief Add forces and torques from ghost particles to real particles.
    */
   void ghosts_reduce_forces();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  /**
+   * @brief Add dipole fields from ghost particles to real particles.
+   */
+  void ghosts_reduce_dipole_field();
+  /**
+   * @brief Reset dipole fields on ghost particles.
+   */
+  void ghosts_reset_dipole_field() {
+    for_each_ghost_particle([](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+  }
+#endif
 
   /** Set forces and torques on all ghosts to zero. */
   void ghosts_reset_forces() {

@@ -141,7 +141,10 @@ static void init_forces_and_thermostat(System::System const &system) {
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  reinit_dip_fld_ghost(cell_structure);
+  if (system.dipoles.impl->solver.has_value()) {
+    cell_structure.ghosts_reset_dipole_field();
+    reinit_dip_fld_ghost(cell_structure);
+  }
 #endif
 }
 
@@ -281,7 +284,9 @@ void System::System::calculate_forces() {
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   // reset dipole field
-  reinit_dip_fld(*cell_structure);
+  if (dipoles.impl->solver.has_value()) {
+    reinit_dip_fld(*cell_structure);
+  }
 #endif
 
   // Use combined function instead of two separate calls
@@ -452,6 +457,13 @@ void System::System::calculate_forces() {
 
   // Communication step: ghost forces
   cell_structure->ghosts_reduce_forces();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+#ifdef ESPRESSO_DIPOLES
+  if (dipoles.impl->solver.has_value()) {
+    cell_structure->ghosts_reduce_dipole_field();
+  }
+#endif
+#endif
 
   // should be pretty late, since it needs to zero out the total force
   comfixed->apply(particles);

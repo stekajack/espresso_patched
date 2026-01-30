@@ -350,6 +350,9 @@ unsigned map_data_parts(unsigned data_parts) {
 #ifdef ESPRESSO_BOND_CONSTRAINT
          | ((data_parts & DATA_PART_RATTLE) ? GHOSTTRANS_RATTLE : 0u)
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+         | ((data_parts & DATA_PART_DIPFLD) ? GHOSTTRANS_DIPFLD : 0u)
+#endif
          | ((data_parts & DATA_PART_BONDS) ? GHOSTTRANS_BONDS : 0u);
   /* clang-format on */
 }
@@ -366,6 +369,12 @@ void CellStructure::ghosts_reduce_forces() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),
                      *get_system().box_geo, GHOSTTRANS_FORCE);
 }
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+void CellStructure::ghosts_reduce_dipole_field() {
+  ghost_communicator(decomposition().collect_ghost_force_comm(),
+                     *get_system().box_geo, GHOSTTRANS_DIPFLD);
+}
+#endif
 #ifdef ESPRESSO_BOND_CONSTRAINT
 void CellStructure::ghosts_reduce_rattle_correction() {
   ghost_communicator(decomposition().collect_ghost_force_comm(),

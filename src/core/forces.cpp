@@ -88,6 +88,17 @@ static ParticleForce external_force(Particle const &p) {
   return f;
 }
 
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+static void reinit_dip_fld(CellStructure const &cell_structure) {
+  cell_structure.for_each_local_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+static void reinit_dip_fld_ghost(CellStructure const &cell_structure) {
+  cell_structure.for_each_ghost_particle(
+      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
+}
+#endif
+
 /** Combined force initialization and Langevin noise application */
 static void init_forces_and_thermostat(System::System const &system) {
 #ifdef ESPRESSO_CALIPER
@@ -129,6 +140,9 @@ static void init_forces_and_thermostat(System::System const &system) {
 
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  reinit_dip_fld_ghost(cell_structure);
+#endif
 }
 
 static void force_capping(CellStructure &cell_structure, double force_cap) {
@@ -143,13 +157,6 @@ static void force_capping(CellStructure &cell_structure, double force_cap) {
         });
   }
 }
-
-#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-static void reinit_dip_fld(CellStructure const &cell_structure) {
-  cell_structure.for_each_local_particle(
-      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
-}
-#endif
 
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 static ForcesKernel create_cabana_neighbor_kernel(
@@ -206,7 +213,7 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   Kokkos::parallel_for("reduction", policy,
                        [&local_force,
 #ifdef ESPRESSO_ROTATION
-                        &local_torque,
+                       &local_torque,
 #endif
                         &unique_particles, num_threads](std::size_t const i) {
                          Utils::Vector3d force{};

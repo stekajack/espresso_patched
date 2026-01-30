@@ -211,6 +211,16 @@ serialize_and_reduce(Archive &ar, Particle &p, unsigned int data_parts,
       ar & p.torque();
     }
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    if (policy == ReductionPolicy::UPDATE and
+        direction == SerializationDirection::LOAD) {
+      Utils::Vector3d dip_fld;
+      ar & dip_fld;
+      p.dip_fld() += dip_fld;
+    } else {
+      ar & p.dip_fld();
+    }
+#endif // ESPRESSO_DIPOLE_FIELD_TRACKING
   }
 #ifdef ESPRESSO_BOND_CONSTRAINT
   if (data_parts & GHOSTTRANS_RATTLE) {

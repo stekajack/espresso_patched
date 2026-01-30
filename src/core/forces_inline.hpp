@@ -255,8 +255,11 @@ inline void add_non_bonded_pair_force_with_p(
   if (dipoles_kernel) {
     auto const d1d2 = p1.dipm() * p2.dipm();
     if (d1d2 != 0.) {
-      pf +=
-          (*dipoles_kernel)(d1d2, p1.calc_dip(), p2.calc_dip(), d, dist, dist2);
+      pf += (*dipoles_kernel)(d1d2, p1.calc_dip(), p2.calc_dip(),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                              p1.dip_fld(), p2.dip_fld(),
+#endif
+                              d, dist, dist2);
     }
   }
 #endif

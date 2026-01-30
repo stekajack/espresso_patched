@@ -136,6 +136,10 @@ public:
    */
   inline ParticleForce pair_force(double d1d2, Utils::Vector3d const &dip1,
                                   Utils::Vector3d const &dip2,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                  Utils::Vector3d &dip_fld_p1,
+                                  Utils::Vector3d &dip_fld_p2,
+#endif
                                   Utils::Vector3d const &d, double dist,
                                   double dist2) const {
     if (d1d2 == 0. or dist >= dp3m_params.r_cut or dist <= 0.)
@@ -175,7 +179,12 @@ public:
     auto const mixmj = vector_product(dip1, dip2);
     auto const mixr = vector_product(dip1, d);
 
-    // Calculate real-space torques
+// Calculate real-space torques
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    // prefactor * (mimj * B_r - mir * mjr * C_r);
+    dip_fld_p1 += prefactor * (-dip2 * B_r + d * (mjr * C_r));
+    dip_fld_p2 += prefactor * (-dip1 * B_r + d * (mir * C_r));
+#endif
     auto const torque = prefactor * (-mixmj * B_r + mixr * (mjr * C_r));
 #ifdef ESPRESSO_NPT
 #if USE_ERFC_APPROXIMATION

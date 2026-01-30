@@ -61,6 +61,12 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 
+#if defined(ESPRESSO_SHARED_MEMORY_PARALLELISM) &&                             \
+    defined(ESPRESSO_DIPOLE_FIELD_TRACKING)
+#error                                                                         \
+    "DIPOLE_FIELD_TRACKING is not yet supported with shared memory parallelism."
+#endif
+
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
@@ -274,8 +280,11 @@ template <int cao> struct AssignTorques {
 
     assert(cao == dp3m.inter_weights.cao());
 
-    auto const kernel = [d_rs, &dp3m](auto const &pref, auto &p_torque,
-                                      std::size_t p_index) {
+    auto const kernel = [d_rs, &dp3m, prefac](auto const &pref, auto &p_torque,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                                              auto &p_dip_fld,
+#endif
+                                              std::size_t p_index) {
       auto const weights = dp3m.inter_weights.template load<cao>(p_index);
       Utils::Vector3d E{};
       p3m_interpolate(dp3m.local_mesh, weights,
@@ -292,6 +301,11 @@ template <int cao> struct AssignTorques {
       p_torque(p_index, thread_id, 2) -= torque[2];
 #else
       p_torque -= torque;
+
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dipl_fld = prefac * E;
+      p_dip_fld -= dipl_fld;
+#endif
 #endif
     };
 
@@ -306,13 +320,17 @@ template <int cao> struct AssignTorques {
             kernel(p.calc_dip() * prefac, local_torque, p_index);
           }
         });
-#else  // ESPRESSO_SHARED_MEMORY_PARALLELISM
+#else // ESPRESSO_SHARED_MEMORY_PARALLELISM
     /* magnetic particle index */
     auto p_index = std::size_t{0ul};
 
     for (auto &p : cell_structure.local_particles()) {
       if (p.dipm() != 0.) {
-        kernel(p.calc_dip() * prefac, p.torque(), p_index);
+        kernel(p.calc_dip() * prefac, p.torque(),
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+               p.dip_fld(),
+#endif
+               p_index);
         ++p_index;
       }
     }
@@ -962,6 +980,14 @@ double DipolarP3MHeffte<FloatType, Architecture, FFTConfig>::calc_surface_term(
       torque[0u] -= pref * sumix[ip];
       torque[1u] -= pref * sumiy[ip];
       torque[2u] -= pref * sumiz[ip];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dip_fld = Utils::Vector3d{pref * box_dip[0], pref * box_dip[1],
+                                           pref * box_dip[2]};
+      auto &fld = p.dip_fld(); // Reference to dipole field on the particle
+      fld[0] -= dip_fld[0];
+      fld[1] -= dip_fld[1];
+      fld[2] -= dip_fld[2];
+#endif
       ip++;
     }
   }

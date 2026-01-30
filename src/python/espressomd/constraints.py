@@ -212,6 +212,33 @@ class HomogeneousMagneticField(Constraint):
 
     _so_name = "Constraints::HomogeneousMagneticField"
 
+@script_interface_register
+class OscillatingMagneticField(Constraint):
+
+    """
+    Attributes
+    ----------
+    direction : (3,) array_like of :obj:`float`
+        Describes field direction of the magnetic field. Field is  magnitude*cos(frequecy*time + phase_shift) * direction
+   
+    phase_shift: `float`
+    Describes phase_shift of the magnetic field.
+
+    frequency: `float`
+    Describes frequency of the magnetic field.
+
+    magnitude:  `float`
+    Describes strength of the magnetic field.
+
+    H : (3,) array_like of :obj:`float`, read-only
+        Latest evaluated field vector. Updated when forces/energy are computed.
+
+    last_time : `float`, read-only
+        Simulation time corresponding to `H`.
+
+    """
+
+    _so_name = "Constraints::OscillatingMagneticField"
 
 class _Interpolated(Constraint):
 

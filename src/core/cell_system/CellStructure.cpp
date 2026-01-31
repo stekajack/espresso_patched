@@ -86,6 +86,9 @@ void CellStructure::clear_local_properties() {
 #ifdef ESPRESSO_ROTATION
   m_local_torque.reset();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  m_local_dip_fld.reset();
+#endif
 #ifdef ESPRESSO_NPT
   m_local_virial.reset();
 #endif
@@ -137,6 +140,9 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #ifdef ESPRESSO_ROTATION
     Kokkos::realloc(get_local_torque(), num_part, num_threads);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    Kokkos::realloc(get_local_dip_fld(), num_part, num_threads);
+#endif
     Kokkos::realloc(get_id_to_index(), get_cached_max_local_particle_id() + 1);
     Kokkos::deep_copy(get_id_to_index(), -1);
     // Resize particle views using AoSoA_pack's resize method
@@ -149,6 +155,10 @@ void CellStructure::rebuild_local_properties(double const pair_cutoff) {
 #ifdef ESPRESSO_ROTATION
     m_local_torque =
         std::make_unique<ForceType>("local_torque", num_part, num_threads);
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    m_local_dip_fld =
+        std::make_unique<ForceType>("local_dip_fld", num_part, num_threads);
 #endif
     m_id_to_index = std::make_unique<Kokkos::View<int *>>(
         Kokkos::ViewAllocateWithoutInitializing("id_to_index"),
@@ -172,12 +182,18 @@ void CellStructure::reset_local_force() {
   CALI_CXX_MARK_FUNCTION;
 #endif
   Kokkos::deep_copy(get_local_force(), 0.);
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  Kokkos::deep_copy(get_local_dip_fld(), 0.);
+#endif
 }
 
 void CellStructure::reset_local_properties() {
   Kokkos::deep_copy(get_local_force(), 0.);
 #ifdef ESPRESSO_ROTATION
   Kokkos::deep_copy(get_local_torque(), 0.);
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  Kokkos::deep_copy(get_local_dip_fld(), 0.);
 #endif
 #ifdef ESPRESSO_NPT
   Kokkos::deep_copy(get_local_virial(), 0.);

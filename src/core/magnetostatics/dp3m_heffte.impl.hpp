@@ -61,12 +61,6 @@
 #include <boost/mpi/collectives/all_reduce.hpp>
 #include <boost/mpi/collectives/reduce.hpp>
 
-#if defined(ESPRESSO_SHARED_MEMORY_PARALLELISM) &&                             \
-    defined(ESPRESSO_DIPOLE_FIELD_TRACKING)
-#error                                                                         \
-    "DIPOLE_FIELD_TRACKING is not yet supported with shared memory parallelism."
-#endif
-
 #ifdef ESPRESSO_SHARED_MEMORY_PARALLELISM
 #include <Kokkos_Core.hpp>
 #include <omp.h>
@@ -299,6 +293,12 @@ template <int cao> struct AssignTorques {
       p_torque(p_index, thread_id, 0) -= torque[0];
       p_torque(p_index, thread_id, 1) -= torque[1];
       p_torque(p_index, thread_id, 2) -= torque[2];
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      auto const dipl_fld = prefac * E;
+      p_dip_fld(p_index, thread_id, 0) -= dipl_fld[0];
+      p_dip_fld(p_index, thread_id, 1) -= dipl_fld[1];
+      p_dip_fld(p_index, thread_id, 2) -= dipl_fld[2];
+#endif
 #else
       p_torque -= torque;
 
@@ -313,11 +313,18 @@ template <int cao> struct AssignTorques {
     auto const n_part = dp3m.inter_weights.size();
     auto const &unique_particles = cell_structure.get_unique_particles();
     auto &local_torque = cell_structure.get_local_torque();
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+    auto &local_dip_fld = cell_structure.get_local_dip_fld();
+#endif
     kokkos_parallel_range_for(
         "AssignTorques", std::size_t{0u}, n_part, [&](std::size_t p_index) {
           auto const &p = *unique_particles.at(p_index);
           if (p.dipm() != 0.) {
-            kernel(p.calc_dip() * prefac, local_torque, p_index);
+            kernel(p.calc_dip() * prefac, local_torque,
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                   local_dip_fld,
+#endif
+                   p_index);
           }
         });
 #else // ESPRESSO_SHARED_MEMORY_PARALLELISM

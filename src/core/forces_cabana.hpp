@@ -58,6 +58,9 @@ struct ForcesKernel {
 #ifdef ESPRESSO_ROTATION
   CellStructure::ForceType const &local_torque;
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  CellStructure::ForceType const &local_dip_fld;
+#endif
 #ifdef ESPRESSO_NPT
   Utils::Vector3d *const global_virial;
   CellStructure::VirialType const &local_virial;
@@ -81,6 +84,9 @@ struct ForcesKernel {
 #ifdef ESPRESSO_ROTATION
       CellStructure::ForceType const &local_torque_,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+      CellStructure::ForceType const &local_dip_fld_,
+#endif
 #ifdef ESPRESSO_NPT
       Utils::Vector3d *const global_virial_,
       CellStructure::VirialType const &local_virial_,
@@ -93,6 +99,9 @@ struct ForcesKernel {
         unique_particles(unique_particles_), local_force(local_force_),
 #ifdef ESPRESSO_ROTATION
         local_torque(local_torque_),
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        local_dip_fld(local_dip_fld_),
 #endif
 #ifdef ESPRESSO_NPT
         global_virial(global_virial_), local_virial(local_virial_),
@@ -267,13 +276,28 @@ struct ForcesKernel {
     }
 #endif // ESPRESSO_ELECTROSTATICS
 
+    auto const thread_id = omp_get_thread_num();
+
     // Only call dipole force kernel if active
 #ifdef ESPRESSO_DIPOLES
     if (dipoles_active()) {
       auto const d1d2 = aosoa.dipm(i) * aosoa.dipm(j);
       if (d1d2 != 0.) {
+        Utils::Vector3d dip_fld_i{}, dip_fld_j{};
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+        pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1,
+                                aosoa.dipm(j) * dir2, dip_fld_i, dip_fld_j, d,
+                                dist, dist * dist);
+        local_dip_fld(i, thread_id, 0) += dip_fld_i[0];
+        local_dip_fld(i, thread_id, 1) += dip_fld_i[1];
+        local_dip_fld(i, thread_id, 2) += dip_fld_i[2];
+        local_dip_fld(j, thread_id, 0) += dip_fld_j[0];
+        local_dip_fld(j, thread_id, 1) += dip_fld_j[1];
+        local_dip_fld(j, thread_id, 2) += dip_fld_j[2];
+#else
         pf += (*dipoles_kernel)(d1d2, aosoa.dipm(i) * dir1,
                                 aosoa.dipm(j) * dir2, d, dist, dist * dist);
+#endif
       }
     }
 #endif // ESPRESSO_DIPOLES
@@ -283,8 +307,6 @@ struct ForcesKernel {
     pf.f += f1_asym;
     opf.f += f2_asym;
 #endif // ESPRESSO_ELECTROSTATICS
-
-    auto const thread_id = omp_get_thread_num();
 
     local_force(i, thread_id, 0) += pf.f[0];
     local_force(i, thread_id, 1) += pf.f[1];

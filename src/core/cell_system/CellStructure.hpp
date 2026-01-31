@@ -209,6 +209,9 @@ private:
 #ifdef ESPRESSO_ROTATION
   std::unique_ptr<ForceType> m_local_torque;
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  std::unique_ptr<ForceType> m_local_dip_fld;
+#endif
 #ifdef ESPRESSO_NPT
   std::unique_ptr<VirialType> m_local_virial;
 #endif
@@ -751,6 +754,9 @@ public:
   auto &get_local_force() { return *m_local_force; }
 #ifdef ESPRESSO_ROTATION
   auto &get_local_torque() { return *m_local_torque; }
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto &get_local_dip_fld() { return *m_local_dip_fld; }
 #endif
 #ifdef ESPRESSO_NPT
   auto &get_local_virial() { return *m_local_virial; }

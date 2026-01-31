@@ -172,6 +172,9 @@ static ForcesKernel create_cabana_neighbor_kernel(
 #ifdef ESPRESSO_ROTATION
   auto const &local_torque = system.cell_structure->get_local_torque();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto const &local_dip_fld = system.cell_structure->get_local_dip_fld();
+#endif
 #ifdef ESPRESSO_NPT
   auto const &local_virial = system.cell_structure->get_local_virial();
 #endif
@@ -191,6 +194,9 @@ static ForcesKernel create_cabana_neighbor_kernel(
 #ifdef ESPRESSO_ROTATION
                              local_torque,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                             local_dip_fld,
+#endif
 #ifdef ESPRESSO_NPT
                              virial,
                              local_virial,
@@ -205,6 +211,9 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 #ifdef ESPRESSO_ROTATION
   auto const &local_torque = system.cell_structure->get_local_torque();
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+  auto const &local_dip_fld = system.cell_structure->get_local_dip_fld();
+#endif
 #ifdef ESPRESSO_NPT
   auto const &local_virial = system.cell_structure->get_local_virial();
 #endif
@@ -218,10 +227,16 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
 #ifdef ESPRESSO_ROTATION
                        &local_torque,
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                        &local_dip_fld,
+#endif
                         &unique_particles, num_threads](std::size_t const i) {
                          Utils::Vector3d force{};
 #ifdef ESPRESSO_ROTATION
                          Utils::Vector3d torque{};
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         Utils::Vector3d dip_fld{};
 #endif
                          for (int tid = 0; tid < num_threads; ++tid) {
                            force[0] += local_force(i, tid, 0);
@@ -232,10 +247,18 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
                            torque[1] += local_torque(i, tid, 1);
                            torque[2] += local_torque(i, tid, 2);
 #endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                           dip_fld[0] += local_dip_fld(i, tid, 0);
+                           dip_fld[1] += local_dip_fld(i, tid, 1);
+                           dip_fld[2] += local_dip_fld(i, tid, 2);
+#endif
                          }
                          unique_particles.at(i)->force() += force;
 #ifdef ESPRESSO_ROTATION
                          unique_particles.at(i)->torque() += torque;
+#endif
+#ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
+                         unique_particles.at(i)->dip_fld() += dip_fld;
 #endif
                        });
   Kokkos::fence();

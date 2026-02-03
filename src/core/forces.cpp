@@ -24,6 +24,7 @@
 #include "BoxGeometry.hpp"
 #include "Particle.hpp"
 #include "PropagationMode.hpp"
+#include "actor/visitors.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
@@ -93,10 +94,6 @@ static void reinit_dip_fld(CellStructure const &cell_structure) {
   cell_structure.for_each_local_particle(
       [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
 }
-static void reinit_dip_fld_ghost(CellStructure const &cell_structure) {
-  cell_structure.for_each_ghost_particle(
-      [](Particle &p) { p.dip_fld() = {0., 0., 0.}; });
-}
 #endif
 
 /** Combined force initialization and Langevin noise application */
@@ -141,9 +138,8 @@ static void init_forces_and_thermostat(System::System const &system) {
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  if (system.dipoles.impl->solver.has_value()) {
+  if (has_actor_of_type<DipolarP3M>(system.dipoles.impl->solver)) {
     cell_structure.ghosts_reset_dipole_field();
-    reinit_dip_fld_ghost(cell_structure);
   }
 #endif
 }
@@ -225,7 +221,7 @@ static void reduce_cabana_forces_and_torques(System::System const &system,
   Kokkos::parallel_for("reduction", policy,
                        [&local_force,
 #ifdef ESPRESSO_ROTATION
-                       &local_torque,
+                        &local_torque,
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
                         &local_dip_fld,
@@ -307,7 +303,7 @@ void System::System::calculate_forces() {
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   // reset dipole field
-  if (dipoles.impl->solver.has_value()) {
+  if (has_actor_of_type<DipolarP3M>(dipoles.impl->solver)) {
     reinit_dip_fld(*cell_structure);
   }
 #endif
@@ -482,7 +478,7 @@ void System::System::calculate_forces() {
   cell_structure->ghosts_reduce_forces();
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 #ifdef ESPRESSO_DIPOLES
-  if (dipoles.impl->solver.has_value()) {
+  if (has_actor_of_type<DipolarP3M>(dipoles.impl->solver)) {
     cell_structure->ghosts_reduce_dipole_field();
   }
 #endif

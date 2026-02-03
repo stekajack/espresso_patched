@@ -138,7 +138,7 @@ static void init_forces_and_thermostat(System::System const &system) {
   // Initialize ghost forces (unchanged)
   cell_structure.ghosts_reset_forces();
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  if (has_actor_of_type<DipolarP3M>(system.dipoles.impl->solver)) {
+  if (system.dipoles.impl->solver.has_value()) {
     cell_structure.ghosts_reset_dipole_field();
   }
 #endif
@@ -302,8 +302,8 @@ void System::System::calculate_forces() {
   }
 #endif
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
-  // reset dipole field
-  if (has_actor_of_type<DipolarP3M>(dipoles.impl->solver)) {
+  // reset dipole field if any dipole solver is active
+  if (dipoles.impl->solver.has_value()) {
     reinit_dip_fld(*cell_structure);
   }
 #endif
@@ -478,7 +478,7 @@ void System::System::calculate_forces() {
   cell_structure->ghosts_reduce_forces();
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
 #ifdef ESPRESSO_DIPOLES
-  if (has_actor_of_type<DipolarP3M>(dipoles.impl->solver)) {
+  if (dipoles.impl->solver.has_value()) {
     cell_structure->ghosts_reduce_dipole_field();
   }
 #endif

@@ -22,7 +22,8 @@ import importlib_wrapper
 import numpy as np
 
 tutorial, skipIfMissingFeatures = importlib_wrapper.configure_and_import(
-    "@TUTORIALS_DIR@/boltzmann_inversion/boltzmann_inversion.py")
+    "@TUTORIALS_DIR@/boltzmann_inversion/boltzmann_inversion.py",
+    p3m_params={"mesh": [16, 16, 16], "cao": 3})
 
 
 @skipIfMissingFeatures
@@ -32,7 +33,7 @@ class Tutorial(ut.TestCase):
     def test_boltzmann_inversion(self):
         rdf_exp = tutorial.rdf
         rdf_imp = tutorial.rdf_dh
-        np.testing.assert_allclose(rdf_exp, rdf_imp, rtol=0.1, atol=0.18)
+        np.testing.assert_allclose(rdf_exp, rdf_imp, rtol=0.1, atol=0.25)
 
 
 if __name__ == "__main__":

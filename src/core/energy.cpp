@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -29,11 +29,13 @@
 #include "energy_inline.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "short_range_loop.hpp"
+#include "system/GpuParticleData.hpp"
 #include "system/System.hpp"
 
 #include "electrostatics/coulomb.hpp"
 #include "magnetostatics/dipoles.hpp"
 
+#include <cmath>
 #include <cstddef>
 #include <memory>
 #include <optional>
@@ -55,8 +57,8 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
   auto &obs_energy = *obs_energy_ptr;
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
-  gpu.clear_energy_on_device();
-  gpu.update();
+  gpu->clear_energy_on_device();
+  gpu->update();
 #endif
   on_observable_calc();
 
@@ -107,7 +109,7 @@ std::shared_ptr<Observable_stat> System::calculate_energy() {
 
 #if defined(ESPRESSO_CUDA) and                                                 \
     (defined(ESPRESSO_ELECTROSTATICS) or defined(ESPRESSO_DIPOLES))
-  auto const energy_host = gpu.copy_energy_to_host();
+  auto const energy_host = gpu->copy_energy_to_host();
   if (!obs_energy.coulomb.empty())
     obs_energy.coulomb[1] += static_cast<double>(energy_host.coulomb);
   if (!obs_energy.dipolar.empty())

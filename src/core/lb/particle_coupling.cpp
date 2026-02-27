@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -40,12 +40,12 @@
 #include <caliper/cali.h>
 #endif
 
+#include <cassert>
 #include <cmath>
 #include <cstdint>
 #include <initializer_list>
 #include <limits>
 #include <ranges>
-#include <stdexcept>
 #include <vector>
 
 static Thermostat::GammaType lb_handle_particle_anisotropy(Particle const &p,

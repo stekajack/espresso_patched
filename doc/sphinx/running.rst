@@ -792,6 +792,22 @@ GDB can investigate ASAN reports with break points:
     set breakpoint pending on
     break __asan_report_error
 
+If that doesn't work, ASAN report can be configured to trigger a signal:
+
+.. code-block:: bash
+
+    ASAN_OPTIONS=abort_on_error=1 ./pypresso script.py
+
+Multiple `ASAN options <https://github.com/google/sanitizers/wiki/AddressSanitizerFlags#run-time-flags>`__
+can be joined with a semicolon.
+
+When using the GCC compiler toolchain, it might be necessary to preload
+the ASAN libraries before the C++ library, like so:
+
+.. code-block:: bash
+
+    LD_PRELOAD="$(g++ -print-file-name=libasan.so):$(g++ -print-file-name=libstdc++.so)" ./pypresso script.py
+
 .. _UBSAN:
 
 UBSAN

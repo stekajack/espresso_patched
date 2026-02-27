@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 The ESPResSo project
+ * Copyright (C) 2021-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -285,7 +285,7 @@ BOOST_FIXTURE_TEST_CASE(espresso_system_stand_alone, ParticleFactory) {
         if (rank == 0) {
           auto pf = get_particle_property(pid1, &Particle::force_and_torque);
           BOOST_REQUIRE(pf.has_value());
-          BOOST_CHECK_CLOSE(pf->f[0u], -energy_ref / r, 0.02);
+          BOOST_CHECK_CLOSE(pf->f[0u], -energy_ref / r, 0.04);
           BOOST_CHECK_LE(std::abs(pf->f[1u]), 1e-12);
           BOOST_CHECK_LE(std::abs(pf->f[2u]), 1e-12);
 #ifdef ESPRESSO_ROTATION

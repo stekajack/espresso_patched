@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2013-2022 The ESPResSo project
+# Copyright (C) 2013-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -38,7 +38,6 @@ cdef extern from "error_handling/RuntimeError.hpp" namespace "ErrorHandling::Run
 cdef extern from "error_handling/RuntimeError.hpp":
     cdef cppclass CoreRuntimeError "ErrorHandling::RuntimeError":
         string format()
-        void print()
         ErrorLevel level()
 
 cdef extern from "errorhandling.hpp" namespace "ErrorHandling":

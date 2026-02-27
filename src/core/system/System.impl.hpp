@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 The ESPResSo project
+ * Copyright (C) 2023-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -25,6 +25,7 @@
 #include "ek/Implementation.hpp"
 #include "lb/Implementation.hpp"
 
+#include "GpuParticleData.hpp"
 #include "accumulators/AutoUpdateAccumulators.hpp"
 #include "bond_breakage/bond_breakage.hpp"
 #include "bonded_interactions/bonded_interaction_data.hpp"

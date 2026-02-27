@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 The ESPResSo project
+ * Copyright (C) 2014-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -56,7 +56,6 @@ public:
   using Base::operator[];
   using Base::back;
   using Base::begin;
-  using Base::broadcast;
   using Base::cbegin;
   using Base::cend;
   using Base::data;

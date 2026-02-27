@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2022 The ESPResSo project
+ * Copyright (C) 2013-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -33,7 +33,6 @@
 #include "script_interface/communication.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/contains.hpp>
 #include <utils/mpi/gather_buffer.hpp>
 #include <utils/mpi/reduce_optional.hpp>
 
@@ -46,6 +45,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace ScriptInterface {

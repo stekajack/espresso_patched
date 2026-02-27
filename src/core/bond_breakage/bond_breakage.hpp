@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -31,7 +31,7 @@
 
 namespace BondBreakage {
 
-/** Stores one or two bond parnters for pair/angle bonds */
+/** Stores one or two bond partners for pair/angle bonds */
 using BondPartners = std::array<std::optional<int>, 2>;
 
 enum class ActionType {

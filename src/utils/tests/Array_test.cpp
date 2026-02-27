@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 The ESPResSo project
+ * Copyright (C) 2018-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -17,7 +17,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#define BOOST_TEST_MODULE Utils::Array test
+#define BOOST_TEST_MODULE "Utils::Array test"
 #define BOOST_TEST_DYN_LINK
 #include <boost/test/unit_test.hpp>
 
@@ -86,14 +86,6 @@ BOOST_AUTO_TEST_CASE(fill) {
   for (int i : a) {
     BOOST_CHECK_EQUAL(i, 10);
   }
-}
-
-BOOST_AUTO_TEST_CASE(broadcast) {
-  constexpr auto a = Array<int, 3>::broadcast(5);
-  static_assert(a[0] == 5);
-  static_assert(a[1] == 5);
-  static_assert(a[2] == 5);
-  BOOST_TEST_PASSPOINT();
 }
 
 BOOST_AUTO_TEST_CASE(serialization) {

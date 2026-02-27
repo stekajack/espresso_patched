@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 The ESPResSo project
+# Copyright (C) 2020-2026 The ESPResSo project
 #
 # This file is part of ESPResSo.
 #
@@ -231,18 +231,11 @@ class Test(ut.TestCase):
                                                 barostat=barostat)
 
             if barostat == "Andersen":
-                exception_msg = ""
-                try:
+                with self.assertRaisesRegex(Exception, "the volume to become negative"):
                     system.integrator.run(10)
-                except Exception as err:
-                    exception_msg = f"{exception_msg}\n{err}"
-                try:
-                    system.part.clear()
-                except Exception as err:
-                    exception_msg = f"{exception_msg}\n{err}"
-                self.assertIn("the volume to become negative", exception_msg)
+                system.part.clear()
             if barostat == "MTK":
-                # Volume cannot be negative within NPT ensemble based on MTK equation
+                # Volume cannot be negative with NPT based on MTK equation
                 self.assertGreater(float(np.prod(system.box_l)), 0.)
 
         system.part.clear()

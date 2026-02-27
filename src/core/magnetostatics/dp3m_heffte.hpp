@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -41,10 +41,11 @@
 #include <omp.h>
 #endif
 
+#include <array>
+#include <cassert>
 #include <complex>
 #include <cstddef>
 #include <memory>
-#include <optional>
 #include <stdexcept>
 #include <type_traits>
 #include <utility>

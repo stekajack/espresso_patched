@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 The ESPResSo project
+ * Copyright (C) 2022-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -31,8 +31,10 @@
 #include <boost/mpi.hpp>
 #include <boost/serialization/access.hpp>
 
+#include <algorithm>
 #include <cassert>
 #include <memory>
+#include <span>
 #include <unordered_set>
 #include <utility>
 #include <variant>

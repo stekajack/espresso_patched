@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -26,7 +26,7 @@
  *
  *  In this file you find everything concerning the exchange of
  *  particle data (particles, ghosts, positions and forces) for short
- *  range interactions between the spacial domains of neighbouring
+ *  range interactions between the spatial domains of neighboring
  *  nodes.
  *
  *  <h2> How does this work </h2>

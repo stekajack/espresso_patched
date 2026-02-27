@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -35,8 +35,6 @@
 #include "electrostatics/reaction_field.hpp"
 #include "electrostatics/scafacos.hpp"
 
-#include <cstddef>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <type_traits>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -35,8 +35,10 @@
 
 #include <boost/mpi/communicator.hpp>
 
+#include <cstddef>
 #include <optional>
 #include <span>
+#include <utility>
 #include <vector>
 
 /**

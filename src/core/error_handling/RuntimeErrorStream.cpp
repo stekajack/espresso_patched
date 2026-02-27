@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -18,6 +18,7 @@
  */
 
 #include "error_handling/RuntimeErrorStream.hpp"
+#include "error_handling/RuntimeError.hpp"
 #include "error_handling/RuntimeErrorCollector.hpp"
 
 #include <string>

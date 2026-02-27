@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  *
  * This file is part of ESPResSo.
  *
@@ -73,7 +73,7 @@ template <typename T>
 auto iall_gatherv(boost::mpi::communicator const &comm, T const *in_values,
                   int in_size, T *out_values, int const *sizes) {
   auto const displ =
-      detail::displacements({sizes, static_cast<size_t>(comm.size())});
+      detail::displacements({sizes, static_cast<std::size_t>(comm.size())});
 
   return detail::iall_gatherv_impl(comm, in_values, in_size, out_values, sizes,
                                    displ.data());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2025 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -29,23 +29,20 @@
 
 #include "BoxGeometry.hpp"
 #include "cell_system/CellStructure.hpp"
-#include "cells.hpp"
 #include "nonbonded_interactions/nonbonded_interaction_data.hpp"
 #include "random.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/math/sqr.hpp>
 #include <utils/math/tensor_product.hpp>
 #include <utils/matrix.hpp>
 
 #include <boost/mpi/collectives/reduce.hpp>
 
-#include <algorithm>
 #include <cmath>
-#include <cstdint>
 #include <functional>
+#include <type_traits>
 
 /** Return a random uniform 3D vector with the Philox thermostat.
  *  Random numbers depend on

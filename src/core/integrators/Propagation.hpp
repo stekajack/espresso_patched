@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2023 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -32,6 +32,7 @@ public:
   int ek_skipped_md_steps = 0;
   /** If true, forces will be recalculated before the next integration. */
   bool recalc_forces = true;
+  bool recalc_used_propagations = true;
 
   void update_default_propagation(int thermo_switch);
 
@@ -45,5 +46,6 @@ public:
   void set_integ_switch(int value) {
     integ_switch = value;
     recalc_forces = true;
+    recalc_used_propagations = true;
   }
 };

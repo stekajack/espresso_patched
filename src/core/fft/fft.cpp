@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 The ESPResSo project
+ * Copyright (C) 2010-2026 The ESPResSo project
  * Copyright (C) 2002,2003,2004,2005,2006,2007,2008,2009,2010
  *   Max-Planck-Institute for Polymer Research, Theory Group
  *
@@ -45,10 +45,10 @@
 #endif
 
 #include <algorithm>
+#include <cassert>
 #include <cmath>
 #include <cstddef>
-#include <cstdio>
-#include <cstring>
+#include <limits>
 #include <optional>
 #include <span>
 #include <stdexcept>

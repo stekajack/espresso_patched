@@ -134,20 +134,22 @@ struct ForcesKernel {
   }
 #endif
 
-#ifdef ESPRESSO_THOLE
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
   thole_active(IA_parameters const &ia_params) const {
+#ifdef ESPRESSO_THOLE
     return (ia_params.thole.scaling_coeff != 0. and
             ia_params.thole.q1q2 != 0. and coulomb_kernel != nullptr);
-  }
 #endif
+    return false;
+  }
 
-#ifdef ESPRESSO_DIPOLES
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION bool
   dipoles_active() const {
+#ifdef ESPRESSO_DIPOLES
     return dipoles_kernel != nullptr;
-  }
 #endif
+    return false;
+  }
 
   ESPRESSO_ATTR_ALWAYS_INLINE KOKKOS_INLINE_FUNCTION void
   operator()(std::size_t i, std::size_t j) const {

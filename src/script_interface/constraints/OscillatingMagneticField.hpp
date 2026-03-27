@@ -32,9 +32,9 @@ public:
                        m_constraint->set_phase_shift(get_value<double>(v));
                      },
                      [this]() { return m_constraint->phase_shift(); }},
-                    {"H", AutoParameter::read_only,
+                    {"H", AutoParameter::read_only_no_checkpoint,
                      [this]() { return m_constraint->H(); }},
-                    {"last_time", AutoParameter::read_only,
+                    {"last_time", AutoParameter::read_only_no_checkpoint,
                      [this]() { return m_constraint->last_time(); }}});
   }
 

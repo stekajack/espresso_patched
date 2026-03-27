@@ -39,7 +39,10 @@ struct AutoParameter {
 
   /* Result types */
   struct ReadOnly {};
+  struct ReadOnlyNoCheckpoint {};
   static constexpr const ReadOnly read_only = ReadOnly{};
+  static constexpr const ReadOnlyNoCheckpoint read_only_no_checkpoint =
+      ReadOnlyNoCheckpoint{};
 
   /** @brief Read-write parameter that is bound to an object.
    *
@@ -151,8 +154,18 @@ struct AutoParameter {
       : name(name), setter_([](Variant const &) { throw WriteError{}; }),
         getter_(get) {}
 
+  /** @brief Read-only parameter that is not serialized for checkpointing.
+   *  @overload
+   */
+  template <typename Getter>
+  AutoParameter(const char *name, ReadOnlyNoCheckpoint, Getter const &get)
+      : name(name), checkpointable_(false),
+        setter_([](Variant const &) { throw WriteError{}; }), getter_(get) {}
+
   /** The interface name. */
   const std::string name;
+  /** @brief Whether the parameter should be serialized for checkpointing. */
+  const bool checkpointable_ = true;
 
   /**
    * @brief Set the parameter.

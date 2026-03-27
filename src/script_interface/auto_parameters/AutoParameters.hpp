@@ -166,6 +166,10 @@ public:
     std::vector<std::pair<std::string, Variant>> parameter_pack{};
     auto const params = this->get_parameters();
     for (auto const &key : m_key_order) {
+      auto const &param = m_parameters.at(key);
+      if (not param.checkpointable_) {
+        continue;
+      }
       parameter_pack.emplace_back(key, params.at(key));
     }
     return parameter_pack;

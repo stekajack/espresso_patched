@@ -56,9 +56,9 @@ class Checkpoint:
     """
 
     def __init__(self, checkpoint_id=None, checkpoint_path="."):
-        # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ -)
+        # check if checkpoint_id is valid (only allow a-z A-Z 0-9 _ - .)
         if not isinstance(checkpoint_id, str) or re.search(
-                r"[^a-zA-Z0-9_\-]", checkpoint_id) is not None:
+                r"[^a-zA-Z0-9_\-.]", checkpoint_id) is not None:
             raise ValueError("Invalid checkpoint id.")
 
         if not isinstance(checkpoint_path, (str, pathlib.Path)):

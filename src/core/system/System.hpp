@@ -373,6 +373,9 @@ protected:
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
   void integrate_magnetodynamics();
 #endif
+#ifdef ESPRESSO_MAGNETIZE
+  void integrate_magnetodynamics_testing();
+#endif
 
 private:
   /**

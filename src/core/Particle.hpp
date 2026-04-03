@@ -98,6 +98,19 @@ struct ThermalStonerWohlfarthParameters {
 };
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+/** Properties for the ideal magnetizable superparamagnet model. */
+struct IdealMagnetizableSuperparamagnetParameters {
+  /** Flag to distinguish magnetodynamics particles from other virtual sites. */
+  bool is_enabled = false;
+  /** saturation magnetisation of a polarizable particle */
+  double sat_mag = 1.;
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & is_enabled & sat_mag;
+  }
+};
+#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -238,11 +251,8 @@ struct ParticleProperties {
   ThermalStonerWohlfarthParameters magnetodynamics;
 #endif
 
-#ifdef ESPRESSO_MAGNETIZE
-  bool is_magnetizable = false;
-  int magnetize_func = 0;
-  double dipm_sat = 1.;
-  double mag_susc_0 = 0.1; // seems to be a stable number. Do not go higher for dense systems
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+  IdealMagnetizableSuperparamagnetParameters magnetodynamics;
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -293,11 +303,8 @@ struct ParticleProperties {
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
     ar & magnetodynamics;
 #endif
-#ifdef ESPRESSO_MAGNETIZE
-    ar & is_magnetizable;
-    ar & magnetize_func;
-    ar & dipm_sat;
-    ar & mag_susc_0;
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+    ar & magnetodynamics;
 #endif
   }
 };
@@ -577,16 +584,14 @@ public:
   }
   auto &stoner_wohlfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
-#ifdef ESPRESSO_MAGNETIZE
-  auto const &is_magnetizable() const { return p.is_magnetizable; }
-  auto &is_magnetizable() { return p.is_magnetizable; }
-  auto const &magnetize_func() const { return p.magnetize_func; }
-  auto &magnetize_func() { return p.magnetize_func; }
-  auto const &dipm_sat() const { return p.dipm_sat; }
-  auto &dipm_sat() { return p.dipm_sat; }
-  auto const &mag_susc_0() const { return p.mag_susc_0; }
-  auto &mag_susc_0() { return p.mag_susc_0; }
-#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+  auto const &ideal_magnetizable_superparamagnet_is_enabled() const { return p.magnetodynamics.is_enabled; }
+  auto &ideal_magnetizable_superparamagnet_is_enabled() { return p.magnetodynamics.is_enabled; }
+  auto const &saturation_magnetization() const {
+    return p.magnetodynamics.sat_mag;
+  }
+  auto &saturation_magnetization() { return p.magnetodynamics.sat_mag; }
+#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
   auto &dip_fld() { return p.dip_fld; }
@@ -696,6 +701,9 @@ BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ThermalStonerWohlfarthParameters,
                            object_serializable)
 #endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+BOOST_CLASS_IMPLEMENTATION(IdealMagnetizableSuperparamagnetParameters, object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
@@ -714,6 +722,9 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWohlfarthParameters)
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+BOOST_IS_BITWISE_SERIALIZABLE(IdealMagnetizableSuperparamagnetParameters)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

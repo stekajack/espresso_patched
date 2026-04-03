@@ -21,7 +21,7 @@ target_sources(
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dipoles.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dipolar_direct_sum.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/stoner_wohlfarth_thermal.cpp
-          ${CMAKE_CURRENT_SOURCE_DIR}/magnetize.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/ideal_magnetizable_superparamagnet.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dipolar_direct_sum_gpu.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dlc.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/scafacos_impl.cpp)

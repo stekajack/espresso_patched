@@ -311,6 +311,19 @@ void System::System::integrator_sanity_checks() const {
     }
   }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+  if (thermo_switch == THERMO_OFF) {
+    for (auto const &p : cell_structure->local_particles()) {
+      if (p.ideal_magnetizable_superparamagnet_is_enabled()) {
+        runtimeErrorMsg()
+            << "The ideal magnetizable superparamagnet model requires a thermostat";
+        break;
+      }
+    }
+  }
+#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+
 }
 
 #ifdef ESPRESSO_WALBERLA
@@ -579,10 +592,6 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     }
 #endif
 
-#ifdef ESPRESSO_MAGNETIZE
-    integrate_magnetodynamics_testing();
-#endif
-
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
@@ -700,12 +709,8 @@ int System::System::integrate(int n_steps, int reuse_forces) {
     // Communication step: distribute ghost positions
     cell_structure->update_ghosts_and_resort_particle(get_global_ghost_flags());
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
     integrate_magnetodynamics();
-#endif
-
-#ifdef ESPRESSO_MAGNETIZE
-    integrate_magnetodynamics_testing();
 #endif
 
     calculate_forces();

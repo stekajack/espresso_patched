@@ -93,6 +93,19 @@ class Test(ut.TestCase):
             magnetodynamics["is_enabled"] = False
             p1.magnetodynamics = magnetodynamics
             self.system.integrator.run(0, recalc_forces=True)
+        if espressomd.has_features(["IDEAL_MAGNETIZABLE_SUPERPARAMAGNET"]):
+            p0 = self.system.part.by_id(0)
+            p1 = self.system.part.add(pos=p0.pos)
+            p1.vs_auto_relate_to(p0)
+            p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+            magnetodynamics = p1.magnetodynamics
+            with self.assertRaisesRegex(Exception, "The ideal magnetizable superparamagnet model requires a thermostat"):
+                magnetodynamics["is_enabled"] = True
+                p1.magnetodynamics = magnetodynamics
+                self.system.integrator.run(0, recalc_forces=True)
+            magnetodynamics["is_enabled"] = False
+            p1.magnetodynamics = magnetodynamics
+            self.system.integrator.run(0, recalc_forces=True)
 
     def test_01_statefulness(self):
         # setting a thermostat with invalid values should be a no-op

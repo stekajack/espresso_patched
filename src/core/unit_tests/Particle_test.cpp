@@ -322,6 +322,59 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
 }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+
+void check_particle_ideal_magnetizable_superparamagnet(IdealMagnetizableSuperparamagnetParameters const &out,
+                              IdealMagnetizableSuperparamagnetParameters const &ref) {
+  BOOST_TEST(out.is_enabled == ref.is_enabled);
+  BOOST_TEST(out.sat_mag == ref.sat_mag);
+}
+
+BOOST_AUTO_TEST_CASE(ideal_magnetizable_superparamagnet_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<IdealMagnetizableSuperparamagnetParameters>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(IdealMagnetizableSuperparamagnetParameters));
+
+  std::vector<char> buf(expected_size);
+
+  auto pr = IdealMagnetizableSuperparamagnetParameters{.is_enabled = true, .sat_mag = 2.};
+
+  {
+    auto oa = Utils::MemcpyOArchive{buf};
+
+    oa << pr;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{buf};
+    IdealMagnetizableSuperparamagnetParameters out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_ideal_magnetizable_superparamagnet(out, pr);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(ideal_magnetizable_superparamagnet_constructors) {
+  auto pr = IdealMagnetizableSuperparamagnetParameters{.is_enabled = true, .sat_mag = 2.};
+
+  {
+    IdealMagnetizableSuperparamagnetParameters out(pr);
+    check_particle_ideal_magnetizable_superparamagnet(out, pr);
+  }
+
+  {
+    IdealMagnetizableSuperparamagnetParameters out;
+    out = pr;
+    check_particle_ideal_magnetizable_superparamagnet(out, pr);
+  }
+}
+#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+
 BOOST_AUTO_TEST_CASE(particle_bitfields) {
   auto p = Particle();
 

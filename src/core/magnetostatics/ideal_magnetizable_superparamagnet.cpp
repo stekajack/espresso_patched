@@ -19,29 +19,22 @@
 
 #include <config/config.hpp>
 
-#ifdef ESPRESSO_MAGNETIZE
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 
 #include "Particle.hpp"
 #include "cell_system/CellStructure.hpp"
 #include "cells.hpp"
 #include "constraints/Constraints.hpp"
 #include "constraints/HomogeneousMagneticField.hpp"
-#include "errorhandling.hpp"
-#include "random.hpp"
 #include "rotation.hpp"
 #include "system/System.hpp"
 #include "thermostat.hpp"
 #include "virtual_sites/relative.hpp"
 
 #include <utils/Vector.hpp>
-#include <utils/uniform.hpp>
 
-#include <cassert>
 #include <cmath>
 #include <memory>
-#include <numbers>
-#include <utility>
-#include <vector>
 
 // absolute error precision required for the optimiser
 constexpr static double dipm_equals_zero2 = std::pow(1e-5, 2);
@@ -50,21 +43,20 @@ constexpr static double dipm_equals_zero2 = std::pow(1e-5, 2);
  * @brief Langevin magnetization function.
  *
  * @param p Particle to magnetize.
- * @return Energy value for the given phi.
  */
-static void magnetize_p_Langevin(Particle &p, Utils::Vector3d const &ext_fld)
-{
-  const double dipm_saturated = p.dipm_sat();
+static void ideal_magnetizable_superparamagnet_langevin(Particle &p, Utils::Vector3d const &ext_fld,
+                                 double const kT) {
+  auto const dipm_saturated = p.saturation_magnetization();
 
   auto const ext_fld_dpl = ext_fld + p.dip_fld();
-  const double tri2 = ext_fld_dpl.norm2();
+  auto const tri2 = ext_fld_dpl.norm2();
   if (tri2 < dipm_equals_zero2) {
     p.dipm() = 0.;
     return;
   }
-  const double tri = std::sqrt(tri2);
+  auto const tri = std::sqrt(tri2);
 
-  const double alpha = 3 * p.mag_susc_0() / dipm_saturated * tri;
+  auto const alpha = dipm_saturated * tri / kT;
 
   double L;
   if (alpha < 1e-8) {
@@ -75,39 +67,7 @@ static void magnetize_p_Langevin(Particle &p, Utils::Vector3d const &ext_fld)
   }
 
   auto const dip_new = (dipm_saturated * L / tri) * ext_fld_dpl;
-
-  auto const [quat, dipm_new] =
-      convert_dip_to_quat(dip_new);
-
-  p.dipm() = dipm_new;
-  p.quat() = quat;
-}
-
-/**
- * @brief Froelich-kennely magnetization function.
- *
- * @param p Particle to magnetize.
- * @return Energy value for the given phi.
- */
-static void magnetize_p_froelich_kennelly(Particle &p, Utils::Vector3d const &ext_fld)
-{
-  const double dipm_saturated = p.dipm_sat();
-  const double xi0 = p.mag_susc_0();
-
-  auto const ext_fld_dpl = ext_fld + p.dip_fld();
-  const double tri2 = ext_fld_dpl.norm2();
-  if (tri2 < dipm_equals_zero2) {
-    p.dipm() = 0.;
-    return;
-  }
-  const double tri = std::sqrt(tri2);
-
-  const double pre_froelich = xi0 * dipm_saturated / (dipm_saturated + xi0 * tri);
-
-  auto const dip_new = pre_froelich * ext_fld_dpl;
-
-  auto const [quat, dipm_new] =
-      convert_dip_to_quat(dip_new);
+  auto const [quat, dipm_new] = convert_dip_to_quat(dip_new);
 
   p.dipm() = dipm_new;
   p.quat() = quat;
@@ -121,7 +81,7 @@ static void magnetize_p_froelich_kennelly(Particle &p, Utils::Vector3d const &ex
  *
  * @return The total external homogeneous magnetic field.
  */
-static auto get_external_field_testing(Constraints::Constraints const &constraints) {
+static auto get_external_field(Constraints::Constraints const &constraints) {
   using HomogeneousMagneticField = ::Constraints::HomogeneousMagneticField;
   Utils::Vector3d ext_fld = {0., 0., 0.};
   for (auto const &constraint : constraints) {
@@ -137,30 +97,23 @@ static auto get_external_field_testing(Constraints::Constraints const &constrain
  * @brief Run magnetodynamics update for local virtual particles.
  *
  * Iterate over local particles and update the dipole moment of virtual
- * particles according to the chosen magnetization funciton.
+ * particles according to the ideal magnetizable superparamagnet model.
  * Collect active homogeneous external magnetic fields from constraints and
  * add the per-particle dipolar contribution before performing dipole update.
  */
-void System::System::integrate_magnetodynamics_testing() {
-  // collect HomogeneousMagneticFields if active
-  auto const ext_fld = get_external_field_testing(*constraints);
+void System::System::integrate_magnetodynamics() {
+  auto const ext_fld = get_external_field(*constraints);
+  auto const kT = thermostat->kT;
   cell_structure->for_each_local_particle([&](Particle &p) {
-    if (not p.is_magnetizable()) {
+    if (not p.is_virtual() or not p.ideal_magnetizable_superparamagnet_is_enabled()) {
       return;
     }
     auto *p_ref = get_reference_particle(*cell_structure, p);
     if (not p_ref) {
       return;
     }
-    switch (p.magnetize_func()) {
-      case 0:
-        magnetize_p_Langevin(p, ext_fld);
-        break;
-      case 1:
-        magnetize_p_froelich_kennelly(p, ext_fld);
-        break;
-    }
+    ideal_magnetizable_superparamagnet_langevin(p, ext_fld, kT);
   });
 }
 
-#endif // ESPRESSO_MAGNETIZE
+#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET

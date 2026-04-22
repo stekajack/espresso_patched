@@ -315,6 +315,42 @@ ParticleHandle::ParticleHandle() {
          };
        }},
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_EGG_MODEL
+      {"magnetodynamics",
+       [this](Variant const &value) {
+         set_particle_property([&value](Particle &p) {
+           auto const dict = get_value<VariantMap>(value);
+           if (dict.contains("is_enabled"))
+             p.egg_model_is_enabled() =
+                 get_value<bool>(dict.at("is_enabled"));
+           if (dict.contains("gamma")) {
+             auto const gamma = get_value<double>(dict.at("gamma"));
+             if (gamma <= 0.) {
+               throw std::domain_error(
+                   error_msg("magnetodynamics", "gamma must be a float > 0"));
+             }
+             p.egg_model_gamma() = gamma;
+           }
+           if (dict.contains("anisotropy_energy"))
+             p.egg_model_anisotropy_energy() =
+                 get_value<double>(dict.at("anisotropy_energy"));
+           if (dict.contains("axis_quat_body"))
+             p.egg_model_axis_quat_body() =
+                 get_quaternion_safe("axis_quat_body",
+                                     dict.at("axis_quat_body"));
+         });
+       },
+       [this]() {
+         auto const &p = get_particle_data(m_pid);
+         return VariantMap{
+             {"is_enabled", p.egg_model_is_enabled()},
+             {"gamma", p.egg_model_gamma()},
+             {"anisotropy_energy", p.egg_model_anisotropy_energy()},
+             {"axis_quat_body", quat2vector(p.egg_model_axis_quat_body())},
+             {"axis", p.egg_model_axis()},
+         };
+       }},
+#endif // ESPRESSO_EGG_MODEL
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
       {"magnetodynamics",
        [this](Variant const &value) {

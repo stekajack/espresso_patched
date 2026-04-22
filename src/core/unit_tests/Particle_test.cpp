@@ -322,6 +322,78 @@ BOOST_AUTO_TEST_CASE(thermal_stoner_wohlfarth_constructors) {
 }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_EGG_MODEL
+
+void check_particle_egg_model(EggModelParameters const &out,
+                              EggModelParameters const &ref) {
+  BOOST_TEST(out.is_enabled == ref.is_enabled);
+  BOOST_TEST(out.gamma == ref.gamma);
+  BOOST_TEST(out.anisotropy_energy == ref.anisotropy_energy);
+  for (unsigned int i = 0; i < 4; i++) {
+    BOOST_TEST(out.axis_quat_body[i] == ref.axis_quat_body[i]);
+    BOOST_TEST(out.axis_quat_space[i] == ref.axis_quat_space[i]);
+  }
+  BOOST_TEST(out.internal_magnetic_torque == ref.internal_magnetic_torque,
+             boost::test_tools::per_element());
+}
+
+BOOST_AUTO_TEST_CASE(egg_model_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<EggModelParameters>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(EggModelParameters));
+
+  std::vector<char> buf(expected_size);
+
+  auto pr = EggModelParameters{};
+  pr.is_enabled = true;
+  pr.gamma = 2.;
+  pr.anisotropy_energy = 3.;
+  pr.axis_quat_body = {4., 5., 6., 7.};
+  pr.axis_quat_space = {8., 9., 10., 11.};
+  pr.internal_magnetic_torque = {12., 13., 14.};
+
+  {
+    auto oa = Utils::MemcpyOArchive{buf};
+
+    oa << pr;
+
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{buf};
+    EggModelParameters out;
+
+    ia >> out;
+
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    check_particle_egg_model(out, pr);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(egg_model_constructors) {
+  auto pr = EggModelParameters{};
+  pr.is_enabled = true;
+  pr.gamma = 2.;
+  pr.anisotropy_energy = 3.;
+  pr.axis_quat_body = {4., 5., 6., 7.};
+  pr.axis_quat_space = {8., 9., 10., 11.};
+  pr.internal_magnetic_torque = {12., 13., 14.};
+
+  {
+    EggModelParameters out(pr);
+    check_particle_egg_model(out, pr);
+  }
+
+  {
+    EggModelParameters out;
+    out = pr;
+    check_particle_egg_model(out, pr);
+  }
+}
+#endif // ESPRESSO_EGG_MODEL
+
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 
 void check_particle_ideal_magnetizable_superparamagnet(IdealMagnetizableSuperparamagnetParameters const &out,

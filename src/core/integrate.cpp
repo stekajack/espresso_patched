@@ -312,6 +312,10 @@ void System::System::integrator_sanity_checks() const {
   }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_EGG_MODEL
+  egg_model_sanity_checks();
+#endif // ESPRESSO_EGG_MODEL
+
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
   if (thermo_switch == THERMO_OFF) {
     for (auto const &p : cell_structure->local_particles()) {
@@ -714,6 +718,10 @@ int System::System::integrate(int n_steps, int reuse_forces) {
 #endif
 
     calculate_forces();
+
+#ifdef ESPRESSO_EGG_MODEL
+    integrate_egg_model();
+#endif
 
 #ifdef ESPRESSO_VIRTUAL_SITES_INERTIALESS_TRACERS
     if (thermostat->lb and

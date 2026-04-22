@@ -93,6 +93,23 @@ class Test(ut.TestCase):
             magnetodynamics["is_enabled"] = False
             p1.magnetodynamics = magnetodynamics
             self.system.integrator.run(0, recalc_forces=True)
+        if espressomd.has_features(["EGG_MODEL"]):
+            p0 = self.system.part.by_id(0)
+            p1 = self.system.part.add(pos=p0.pos, rotation=[True, True, True])
+            p1.vs_auto_relate_to(p0)
+            p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
+            magnetodynamics = p1.magnetodynamics
+            with self.assertRaisesRegex(Exception, "The egg model requires the BD thermostat"):
+                magnetodynamics["is_enabled"] = True
+                p1.magnetodynamics = magnetodynamics
+                self.system.integrator.run(0, recalc_forces=True)
+            self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
+            with self.assertRaisesRegex(Exception, "The VV integrator is incompatible with the currently active combination of thermostats"):
+                self.system.integrator.run(0, recalc_forces=True)
+            magnetodynamics["is_enabled"] = False
+            p1.magnetodynamics = magnetodynamics
+            self.system.thermostat.turn_off()
+            self.system.integrator.run(0, recalc_forces=True)
         if espressomd.has_features(["IDEAL_MAGNETIZABLE_SUPERPARAMAGNET"]):
             p0 = self.system.part.by_id(0)
             p1 = self.system.part.add(pos=p0.pos)

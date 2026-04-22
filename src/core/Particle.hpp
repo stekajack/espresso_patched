@@ -98,6 +98,31 @@ struct ThermalStonerWohlfarthParameters {
 };
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 
+#ifdef ESPRESSO_EGG_MODEL
+/** Properties for Brownian egg-model magnetodynamics. */
+struct EggModelParameters {
+  /** Flag to distinguish egg-model virtual particles from other sites. */
+  bool is_enabled = false;
+  /** Rotational friction for the internal egg-model dynamics. */
+  double gamma = 1.;
+  /** Magnetic anisotropy energy in simulation energy units. */
+  double anisotropy_energy = 0.;
+  /** Easy-axis orientation in the reference particle body-fixed frame. */
+  Utils::Quaternion<double> axis_quat_body =
+      Utils::Quaternion<double>::identity();
+  /** Easy-axis orientation in the space-fixed frame. */
+  Utils::Quaternion<double> axis_quat_space =
+      Utils::Quaternion<double>::identity();
+  /** Internal magnetic torque in the virtual particle body-fixed frame. */
+  Utils::Vector3d internal_magnetic_torque = {0., 0., 0.};
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+    ar & is_enabled & gamma & anisotropy_energy & axis_quat_body &
+        axis_quat_space & internal_magnetic_torque;
+  }
+};
+#endif // ESPRESSO_EGG_MODEL
+
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 /** Properties for the ideal magnetizable superparamagnet model. */
 struct IdealMagnetizableSuperparamagnetParameters {
@@ -251,6 +276,10 @@ struct ParticleProperties {
   ThermalStonerWohlfarthParameters magnetodynamics;
 #endif
 
+#ifdef ESPRESSO_EGG_MODEL
+  EggModelParameters magnetodynamics;
+#endif
+
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
   IdealMagnetizableSuperparamagnetParameters magnetodynamics;
 #endif
@@ -301,6 +330,9 @@ struct ParticleProperties {
     ar & swim;
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    ar & magnetodynamics;
+#endif
+#ifdef ESPRESSO_EGG_MODEL
     ar & magnetodynamics;
 #endif
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
@@ -584,6 +616,42 @@ public:
   }
   auto &stoner_wohlfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
+#ifdef ESPRESSO_EGG_MODEL
+  auto const &egg_model_is_enabled() const {
+    return p.magnetodynamics.is_enabled;
+  }
+  auto &egg_model_is_enabled() { return p.magnetodynamics.is_enabled; }
+  auto const &egg_model_gamma() const { return p.magnetodynamics.gamma; }
+  auto &egg_model_gamma() { return p.magnetodynamics.gamma; }
+  auto const &egg_model_anisotropy_energy() const {
+    return p.magnetodynamics.anisotropy_energy;
+  }
+  auto &egg_model_anisotropy_energy() {
+    return p.magnetodynamics.anisotropy_energy;
+  }
+  auto const &egg_model_axis_quat_body() const {
+    return p.magnetodynamics.axis_quat_body;
+  }
+  auto &egg_model_axis_quat_body() {
+    return p.magnetodynamics.axis_quat_body;
+  }
+  auto const &egg_model_axis_quat_space() const {
+    return p.magnetodynamics.axis_quat_space;
+  }
+  auto &egg_model_axis_quat_space() {
+    return p.magnetodynamics.axis_quat_space;
+  }
+  auto egg_model_axis() const {
+    return Utils::convert_quaternion_to_director(
+        p.magnetodynamics.axis_quat_space);
+  }
+  auto const &egg_model_internal_magnetic_torque() const {
+    return p.magnetodynamics.internal_magnetic_torque;
+  }
+  auto &egg_model_internal_magnetic_torque() {
+    return p.magnetodynamics.internal_magnetic_torque;
+  }
+#endif // ESPRESSO_EGG_MODEL
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
   auto const &ideal_magnetizable_superparamagnet_is_enabled() const { return p.magnetodynamics.is_enabled; }
   auto &ideal_magnetizable_superparamagnet_is_enabled() { return p.magnetodynamics.is_enabled; }
@@ -701,6 +769,9 @@ BOOST_CLASS_IMPLEMENTATION(ParticleParametersSwimming, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ThermalStonerWohlfarthParameters,
                            object_serializable)
 #endif
+#ifdef ESPRESSO_EGG_MODEL
+BOOST_CLASS_IMPLEMENTATION(EggModelParameters, object_serializable)
+#endif
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 BOOST_CLASS_IMPLEMENTATION(IdealMagnetizableSuperparamagnetParameters, object_serializable)
 #endif
@@ -722,6 +793,9 @@ BOOST_IS_BITWISE_SERIALIZABLE(ParticleParametersSwimming)
 #endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
 BOOST_IS_BITWISE_SERIALIZABLE(ThermalStonerWohlfarthParameters)
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+BOOST_IS_BITWISE_SERIALIZABLE(EggModelParameters)
 #endif
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 BOOST_IS_BITWISE_SERIALIZABLE(IdealMagnetizableSuperparamagnetParameters)

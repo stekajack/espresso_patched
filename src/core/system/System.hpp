@@ -373,6 +373,10 @@ protected:
 #if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
   void integrate_magnetodynamics();
 #endif
+#ifdef ESPRESSO_EGG_MODEL
+  void egg_model_sanity_checks() const;
+  void integrate_egg_model();
+#endif
 
 private:
   /**

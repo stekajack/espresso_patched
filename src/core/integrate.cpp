@@ -300,33 +300,9 @@ void System::System::integrator_sanity_checks() const {
 #endif // ESPRESSO_BOND_CONSTRAINT
 #endif // ESPRESSO_VIRTUAL_SITES_CENTER_OF_MASS
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  if (thermo_switch == THERMO_OFF) {
-    for (auto const &p : cell_structure->local_particles()) {
-      if (p.stoner_wohlfarth_is_enabled()) {
-        runtimeErrorMsg()
-            << "The thermal Stoner-Wohlfarth model requires a thermostat";
-        break;
-      }
-    }
-  }
-#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
-
-#ifdef ESPRESSO_EGG_MODEL
-  egg_model_sanity_checks();
-#endif // ESPRESSO_EGG_MODEL
-
-#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
-  if (thermo_switch == THERMO_OFF) {
-    for (auto const &p : cell_structure->local_particles()) {
-      if (p.ideal_magnetizable_superparamagnet_is_enabled()) {
-        runtimeErrorMsg()
-            << "The ideal magnetizable superparamagnet model requires a thermostat";
-        break;
-      }
-    }
-  }
-#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  magnetodynamics_sanity_checks();
+#endif
 
 }
 

@@ -811,10 +811,10 @@ class CheckpointTest(ut.TestCase):
     @ut.skipIf(not has_any_thermostat, 'no thermostat available')
     def test_thermal_stoner_wohlfarth_virtual_sites(self):
         p_real, p_virt = system.part.by_ids([11, 12])
-        self.assertEqual(p_virt.magnetodynamics["is_enabled"],
+        self.assertEqual(p_virt.magnetodynamics.tsw["is_enabled"],
                          magnetodynamics_params.pop("is_enabled"))
         for key, value in magnetodynamics_params.items():
-            np.testing.assert_allclose(p_virt.magnetodynamics[key], value)
+            np.testing.assert_allclose(p_virt.magnetodynamics.tsw[key], value)
         Propagation = espressomd.propagation.Propagation
         prop_flag = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
         self.assertEqual(p_real.propagation, Propagation.SYSTEM_DEFAULT)

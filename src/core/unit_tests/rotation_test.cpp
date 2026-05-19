@@ -282,7 +282,7 @@ BOOST_AUTO_TEST_CASE(stoner_wohlfarth_no_field_test) {
   p.magnetic_anisotropy_energy() = 1.;
   p.stoner_wohlfarth_tau0_inv() = 1.;
   p.stoner_wohlfarth_dt_incr() = 1.;
-  p.saturation_magnetization() = sat_mag;
+  p.stoner_wohlfarth_saturation_magnetization() = sat_mag;
   for (auto phi0 : {0., 0.01, -0.01}) {
     {
       prepare_tsw_flip(p, phi0);

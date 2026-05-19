@@ -322,8 +322,8 @@ if not system.thermostat.call_method("is_off") and espressomd.has_features(
                              rotation=(False, False, False),
                              fix=(True, True, True))
     p_tsw2 = system.part.add(
-        id=12, pos=p_tsw1.pos, dip=[1, 2, 3], rotation=[False, False, False],
-        magnetodynamics=magnetodynamics_params)
+        id=12, pos=p_tsw1.pos, dip=[1, 2, 3], rotation=[False, False, False])
+    p_tsw2.magnetodynamics.tsw = magnetodynamics_params
     p_tsw2.vs_auto_relate_to(p_tsw1)
     p_tsw2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 

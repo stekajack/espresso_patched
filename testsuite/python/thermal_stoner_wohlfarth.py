@@ -71,8 +71,8 @@ class Test(ut.TestCase):
                                   rotation=[False, False, False],
                                   fix=[True, True, True])
         p2 = self.system.part.add(
-            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False],
-            magnetodynamics=self.default_magnetodynamics)
+            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False])
+        p2.magnetodynamics.tsw = self.default_magnetodynamics
         p2.vs_auto_relate_to(p1)
         p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
         return p1, p2
@@ -84,7 +84,7 @@ class Test(ut.TestCase):
         count = 0
         while not (found_min1 and found_min2) and count < max_iterations:
             self.system.integrator.run(100)
-            phi0_deg = np.degrees(p2.magnetodynamics["sw_phi_0"])
+            phi0_deg = np.degrees(p2.magnetodynamics.tsw["sw_phi_0"])
             if np.isclose(phi0_deg, 60., atol=1e-06):
                 found_min1 = True
             if np.isclose(phi0_deg, 300., atol=1e-06):
@@ -98,7 +98,7 @@ class Test(ut.TestCase):
         while not (phi_no_flip and phi_yes_flip) and count < max_iterations:
             old_dip = np.copy(p2.dip)
             self.system.integrator.run(1)
-            new_phi = p2.magnetodynamics["sw_phi_0"]
+            new_phi = p2.magnetodynamics.tsw["sw_phi_0"]
             new_dip = np.copy(p2.dip)
             if phi0_start == new_phi and not phi_no_flip:
                 np.testing.assert_allclose(old_dip, new_dip, atol=1e-06)
@@ -141,6 +141,13 @@ class Test(ut.TestCase):
         self.assertEqual(found_min1, True)
         self.assertEqual(found_min2, True)
 
+    @utx.skipIfMissingFeatures(["THERMAL_STONER_WOHLFARTH", "EGG_MODEL"])
+    def test_model_exclusivity(self):
+        _, p2 = self._init_virtual_site_pair()
+        with self.assertRaisesRegex(RuntimeError, "only enable one magnetodynamics model"):
+            p2.magnetodynamics.egg = {"is_enabled": True, "gamma": 1.0}
+        self.assertTrue(p2.magnetodynamics.tsw["is_enabled"])
+        self.assertFalse(p2.magnetodynamics.egg["is_enabled"])
 
 if __name__ == "__main__":
     ut.main()

@@ -57,8 +57,8 @@ class Test(ut.TestCase):
                                   rotation=[False, False, False],
                                   fix=[True, True, True])
         p2 = self.system.part.add(
-            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False],
-            magnetodynamics=self.default_magnetodynamics)
+            pos=p1.pos, dip=[1, 2, 3], rotation=[False, False, False])
+        p2.magnetodynamics.ideal = self.default_magnetodynamics
         p2.vs_auto_relate_to(p1)
         p2.propagation = (Propagation.TRANS_VS_RELATIVE |
                           Propagation.ROT_VS_INDEPENDENT)
@@ -66,10 +66,10 @@ class Test(ut.TestCase):
 
     def test_magnetodynamics_property(self):
         _, p2 = self._init_virtual_site_pair()
-        self.assertEqual(set(p2.magnetodynamics.keys()),
+        self.assertEqual(set(p2.magnetodynamics.ideal.keys()),
                          {"is_enabled", "sat_mag"})
-        self.assertEqual(p2.magnetodynamics["is_enabled"], True)
-        self.assertAlmostEqual(p2.magnetodynamics["sat_mag"], 2.0)
+        self.assertEqual(p2.magnetodynamics.ideal["is_enabled"], True)
+        self.assertAlmostEqual(p2.magnetodynamics.ideal["sat_mag"], 2.0)
 
     def test_minimal_no_field(self):
         _, p2 = self._init_virtual_site_pair()

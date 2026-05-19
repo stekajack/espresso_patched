@@ -30,6 +30,12 @@ from .propagation import Propagation
 
 
 @script_interface_register
+class ParticleMagnetodynamics(ScriptInterfaceHelper):
+    _so_name = "Particles::ParticleMagnetodynamics"
+    _so_checkpointable = False
+
+
+@script_interface_register
 class ParticleHandle(ScriptInterfaceHelper):
     """
     Attributes

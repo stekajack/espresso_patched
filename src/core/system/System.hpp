@@ -370,11 +370,13 @@ protected:
   void update_icc_particles();
   bool has_icc_enabled() const;
 #endif // ESPRESSO_ELECTROSTATICS
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  void magnetodynamics_sanity_checks() const;
+#endif
 #if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
   void integrate_magnetodynamics();
 #endif
 #ifdef ESPRESSO_EGG_MODEL
-  void egg_model_sanity_checks() const;
   void integrate_egg_model();
 #endif
 

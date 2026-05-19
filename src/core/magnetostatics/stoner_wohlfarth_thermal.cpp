@@ -149,34 +149,6 @@ static double get_phi_at_energy_min(double theta, double h, double phi0,
   return std::fmod(solution + two_pi, two_pi);
 }
 
-/**
- * @brief Collect external magnetic field from active constraints.
- *
- * Iterate over constraints and sum the field vectors provided by homogeneous
- * and oscillating magnetic field constraints at the given simulation time.
- *
- * @param constraints Collection of constraints.
- * @param time Current simulation time.
- * @return The total external magnetic field.
- */
-static auto get_external_field(Constraints::Constraints const &constraints,
-                               double time) {
-  using HomogeneousMagneticField = ::Constraints::HomogeneousMagneticField;
-  using OscillatingMagneticField = ::Constraints::OscillatingMagneticField;
-  Utils::Vector3d ext_fld = {0., 0., 0.};
-  for (auto const &constraint : constraints) {
-    auto ptr = std::dynamic_pointer_cast<HomogeneousMagneticField>(constraint);
-    if (ptr) {
-      ext_fld += ptr->H();
-    }
-    auto osc_ptr =
-        std::dynamic_pointer_cast<OscillatingMagneticField>(constraint);
-    if (osc_ptr) {
-      ext_fld += osc_ptr->field_at(time);
-    }
-  }
-  return ext_fld;
-}
 
 /**
  * @brief Simplified Stoner-Wohlfarth update in field-free case.
@@ -193,7 +165,7 @@ void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
   auto const tau_inv = p.stoner_wohlfarth_tau0_inv() * std::exp(-ani_param);
   auto const p12 = 1. - std::exp(-p.stoner_wohlfarth_dt_incr() * tau_inv);
   auto const kernel = [&](bool flip) {
-    auto const sat_mag = (flip ? -1. : +1.) * p.saturation_magnetization();
+    auto const sat_mag = (flip ? -1. : +1.) * p.stoner_wohlfarth_saturation_magnetization();
     auto const [quat, dipm] = convert_dip_to_quat(sat_mag * e_k);
     p.stoner_wohlfarth_phi_0() = flip ? pi : 0.;
     p.dipm() = dipm;
@@ -225,7 +197,7 @@ void stoner_wohlfarth_no_field(Particle &p, Utils::Vector3d const &e_k,
  * @param kT Thermal energy from thermostat.
  * @param noise Uniform random number in (0,1) used for the kinetic MC step.
  */
-static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
+void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
                                   Utils::Vector3d const &ext_fld_dpl,
                                   double const kT, double const noise) {
 
@@ -250,47 +222,10 @@ static void stoner_wohlfarth_main(Particle &p, Utils::Vector3d const &e_k,
   auto const mom = e_h * std::cos(phi) + rot_axis * std::sin(phi);
   p.stoner_wohlfarth_phi_0() = phi;
   auto const [quat, dipm] =
-      convert_dip_to_quat(mom * p.saturation_magnetization());
+      convert_dip_to_quat(mom * p.stoner_wohlfarth_saturation_magnetization());
   p.dipm() = dipm;
   p.quat() = quat;
 }
 
-/**
- * @brief Run magnetodynamics update for local virtual particles.
- *
- * Iterate over local particles and update the dipole moment of virtual
- * particles according to the thermal Stoner-Wohlfarth model.
- * Collect active homogeneous external magnetic fields from constraints and
- * add the per-particle dipolar contribution before performing either the
- * simplified no-field update or the full thermal Stoner-Wohlfarth update.
- */
-void System::System::integrate_magnetodynamics() {
-  // collect HomogeneousMagneticFields if active
-  auto const ext_fld = get_external_field(*constraints, get_sim_time());
-  auto const kT = thermostat->kT;
-  cell_structure->for_each_local_particle([&](Particle &p) {
-    if (not p.is_virtual() or not p.stoner_wohlfarth_is_enabled()) {
-      return;
-    }
-    auto *p_ref = get_reference_particle(*cell_structure, p);
-    if (not p_ref) {
-      return;
-    }
-    assert(thermostat.thermo_switch != THERMO_OFF);
-    auto const e_k = p_ref->calc_director();
-    auto const ext_fld_dpl = ext_fld + p.dip_fld();
-    auto const random_ints =
-        Random::philox_4_uint64s<RNGSalt::THERMAL_STONER_WOHLFARTH>(
-            thermostat->get_philox_counter(), thermostat->get_philox_seed(),
-            p.id());
-    auto const noise = Utils::uniform(random_ints[0]);
-    if (ext_fld_dpl.norm2() == 0.) {
-      stoner_wohlfarth_no_field(p, e_k, kT, noise);
-    } else {
-      // full Stoner-Wohlfarth update with external + dipolar field
-      stoner_wohlfarth_main(p, e_k, ext_fld_dpl, kT, noise);
-    }
-  });
-}
 
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH

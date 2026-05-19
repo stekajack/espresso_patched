@@ -43,6 +43,9 @@ class CellSystem;
 namespace Particles {
 
 class ParticleModifier;
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+class ParticleMagnetodynamics;
+#endif
 
 inline auto error_msg(std::string const &name, std::string const &reason) {
   std::stringstream msg;
@@ -131,6 +134,9 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
   mutable std::weak_ptr<CellSystem::CellSystem> m_cell_structure;
   mutable std::weak_ptr<Interactions::BondedInteractions> m_bonded_ias;
   mutable std::weak_ptr<::System::System> m_system;
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  mutable ObjectRef m_magnetodynamics;
+#endif
   auto get_cell_structure() const {
     auto ptr = m_cell_structure.lock();
     assert(ptr != nullptr);
@@ -156,6 +162,10 @@ class ParticleHandle : public AutoParameters<ParticleHandle> {
                              Variant const &value) const;
 
   template <class F> void set_particle_property(F const &fun) const;
+
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  ObjectRef get_magnetodynamics_handle() const;
+#endif
 
   std::size_t setup_hidden_args(VariantMap const &params);
 

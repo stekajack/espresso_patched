@@ -20,6 +20,9 @@
 #include "initialize.hpp"
 
 #include "ParticleHandle.hpp"
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+#include "ParticleMagnetodynamics.hpp"
+#endif
 #include "ParticleList.hpp"
 #include "ParticleSlice.hpp"
 #include "Polymer.hpp"
@@ -29,6 +32,9 @@ namespace Particles {
 
 void initialize(Utils::Factory<ObjectHandle> *om) {
   om->register_new<ParticleHandle>("Particles::ParticleHandle");
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  om->register_new<ParticleMagnetodynamics>("Particles::ParticleMagnetodynamics");
+#endif
   om->register_new<ParticleList>("Particles::ParticleList");
   om->register_new<ParticleSlice>("Particles::ParticleSlice");
   om->register_new<ParticleModifier>("Particles::ParticleModifier");

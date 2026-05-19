@@ -136,6 +136,47 @@ struct IdealMagnetizableSuperparamagnetParameters {
 };
 #endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+/** Aggregate storage for compiled magnetodynamics models. */
+struct ParticleMagnetodynamicsParameters {
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  ThermalStonerWohlfarthParameters tsw;
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+  EggModelParameters egg;
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+  IdealMagnetizableSuperparamagnetParameters ideal;
+#endif
+
+  int enabled_count() const {
+    auto count = 0;
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    count += static_cast<int>(tsw.is_enabled);
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+    count += static_cast<int>(egg.is_enabled);
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+    count += static_cast<int>(ideal.is_enabled);
+#endif
+    return count;
+  }
+
+  template <class Archive> void serialize(Archive &ar, long int /* version */) {
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    ar & tsw;
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+    ar & egg;
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+    ar & ideal;
+#endif
+  }
+};
+#endif
+
 /** Properties of a particle which are not supposed to
  *  change during the integration, but have to be known
  *  for all ghosts. Ghosts are particles which are
@@ -272,16 +313,8 @@ struct ParticleProperties {
   ParticleParametersSwimming swim;
 #endif
 
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-  ThermalStonerWohlfarthParameters magnetodynamics;
-#endif
-
-#ifdef ESPRESSO_EGG_MODEL
-  EggModelParameters magnetodynamics;
-#endif
-
-#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
-  IdealMagnetizableSuperparamagnetParameters magnetodynamics;
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  ParticleMagnetodynamicsParameters magnetodynamics;
 #endif
 
   template <class Archive> void serialize(Archive &ar, long int /* version */) {
@@ -329,13 +362,7 @@ struct ParticleProperties {
 #ifdef ESPRESSO_ENGINE
     ar & swim;
 #endif
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
-    ar & magnetodynamics;
-#endif
-#ifdef ESPRESSO_EGG_MODEL
-    ar & magnetodynamics;
-#endif
-#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
     ar & magnetodynamics;
 #endif
   }
@@ -586,79 +613,94 @@ public:
   auto &dipm() { return p.dipm; }
   auto calc_dip() const { return calc_director() * dipm(); }
 #endif
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+  auto const &magnetodynamics() const { return p.magnetodynamics; }
+  auto &magnetodynamics() { return p.magnetodynamics; }
+  auto enabled_magnetodynamics_models() const {
+    return p.magnetodynamics.enabled_count();
+  }
+#endif
 #ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
   auto const &stoner_wohlfarth_is_enabled() const {
-    return p.magnetodynamics.is_enabled;
+    return p.magnetodynamics.tsw.is_enabled;
   }
-  auto &stoner_wohlfarth_is_enabled() { return p.magnetodynamics.is_enabled; }
-  auto const &stoner_wohlfarth_phi_0() const { return p.magnetodynamics.phi0; }
-  auto &stoner_wohlfarth_phi_0() { return p.magnetodynamics.phi0; }
-  auto const &saturation_magnetization() const {
-    return p.magnetodynamics.sat_mag;
+  auto &stoner_wohlfarth_is_enabled() { return p.magnetodynamics.tsw.is_enabled; }
+  auto const &stoner_wohlfarth_phi_0() const { return p.magnetodynamics.tsw.phi0; }
+  auto &stoner_wohlfarth_phi_0() { return p.magnetodynamics.tsw.phi0; }
+  auto const &stoner_wohlfarth_saturation_magnetization() const {
+    return p.magnetodynamics.tsw.sat_mag;
   }
-  auto &saturation_magnetization() { return p.magnetodynamics.sat_mag; }
+  auto &stoner_wohlfarth_saturation_magnetization() {
+    return p.magnetodynamics.tsw.sat_mag;
+  }
   auto const &magnetic_anisotropy_field_inv() const {
-    return p.magnetodynamics.ani_fld_inv;
+    return p.magnetodynamics.tsw.ani_fld_inv;
   }
   auto &magnetic_anisotropy_field_inv() {
-    return p.magnetodynamics.ani_fld_inv;
+    return p.magnetodynamics.tsw.ani_fld_inv;
   }
   auto const &magnetic_anisotropy_energy() const {
-    return p.magnetodynamics.ani_energy;
+    return p.magnetodynamics.tsw.ani_energy;
   }
-  auto &magnetic_anisotropy_energy() { return p.magnetodynamics.ani_energy; }
+  auto &magnetic_anisotropy_energy() { return p.magnetodynamics.tsw.ani_energy; }
   auto const &stoner_wohlfarth_tau0_inv() const {
-    return p.magnetodynamics.tau0_inv;
+    return p.magnetodynamics.tsw.tau0_inv;
   }
-  auto &stoner_wohlfarth_tau0_inv() { return p.magnetodynamics.tau0_inv; }
+  auto &stoner_wohlfarth_tau0_inv() { return p.magnetodynamics.tsw.tau0_inv; }
   auto const &stoner_wohlfarth_dt_incr() const {
-    return p.magnetodynamics.dt_incr;
+    return p.magnetodynamics.tsw.dt_incr;
   }
-  auto &stoner_wohlfarth_dt_incr() { return p.magnetodynamics.dt_incr; }
+  auto &stoner_wohlfarth_dt_incr() { return p.magnetodynamics.tsw.dt_incr; }
 #endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
 #ifdef ESPRESSO_EGG_MODEL
   auto const &egg_model_is_enabled() const {
-    return p.magnetodynamics.is_enabled;
+    return p.magnetodynamics.egg.is_enabled;
   }
-  auto &egg_model_is_enabled() { return p.magnetodynamics.is_enabled; }
-  auto const &egg_model_gamma() const { return p.magnetodynamics.gamma; }
-  auto &egg_model_gamma() { return p.magnetodynamics.gamma; }
+  auto &egg_model_is_enabled() { return p.magnetodynamics.egg.is_enabled; }
+  auto const &egg_model_gamma() const { return p.magnetodynamics.egg.gamma; }
+  auto &egg_model_gamma() { return p.magnetodynamics.egg.gamma; }
   auto const &egg_model_anisotropy_energy() const {
-    return p.magnetodynamics.anisotropy_energy;
+    return p.magnetodynamics.egg.anisotropy_energy;
   }
   auto &egg_model_anisotropy_energy() {
-    return p.magnetodynamics.anisotropy_energy;
+    return p.magnetodynamics.egg.anisotropy_energy;
   }
   auto const &egg_model_axis_quat_body() const {
-    return p.magnetodynamics.axis_quat_body;
+    return p.magnetodynamics.egg.axis_quat_body;
   }
   auto &egg_model_axis_quat_body() {
-    return p.magnetodynamics.axis_quat_body;
+    return p.magnetodynamics.egg.axis_quat_body;
   }
   auto const &egg_model_axis_quat_space() const {
-    return p.magnetodynamics.axis_quat_space;
+    return p.magnetodynamics.egg.axis_quat_space;
   }
   auto &egg_model_axis_quat_space() {
-    return p.magnetodynamics.axis_quat_space;
+    return p.magnetodynamics.egg.axis_quat_space;
   }
   auto egg_model_axis() const {
     return Utils::convert_quaternion_to_director(
-        p.magnetodynamics.axis_quat_space);
+        p.magnetodynamics.egg.axis_quat_space);
   }
   auto const &egg_model_internal_magnetic_torque() const {
-    return p.magnetodynamics.internal_magnetic_torque;
+    return p.magnetodynamics.egg.internal_magnetic_torque;
   }
   auto &egg_model_internal_magnetic_torque() {
-    return p.magnetodynamics.internal_magnetic_torque;
+    return p.magnetodynamics.egg.internal_magnetic_torque;
   }
 #endif // ESPRESSO_EGG_MODEL
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
-  auto const &ideal_magnetizable_superparamagnet_is_enabled() const { return p.magnetodynamics.is_enabled; }
-  auto &ideal_magnetizable_superparamagnet_is_enabled() { return p.magnetodynamics.is_enabled; }
-  auto const &saturation_magnetization() const {
-    return p.magnetodynamics.sat_mag;
+  auto const &ideal_magnetizable_superparamagnet_is_enabled() const {
+    return p.magnetodynamics.ideal.is_enabled;
   }
-  auto &saturation_magnetization() { return p.magnetodynamics.sat_mag; }
+  auto &ideal_magnetizable_superparamagnet_is_enabled() {
+    return p.magnetodynamics.ideal.is_enabled;
+  }
+  auto const &ideal_magnetizable_superparamagnet_saturation_magnetization() const {
+    return p.magnetodynamics.ideal.sat_mag;
+  }
+  auto &ideal_magnetizable_superparamagnet_saturation_magnetization() {
+    return p.magnetodynamics.ideal.sat_mag;
+  }
 #endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 #ifdef ESPRESSO_DIPOLE_FIELD_TRACKING
   auto const &dip_fld() const { return p.dip_fld; }
@@ -775,6 +817,10 @@ BOOST_CLASS_IMPLEMENTATION(EggModelParameters, object_serializable)
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 BOOST_CLASS_IMPLEMENTATION(IdealMagnetizableSuperparamagnetParameters, object_serializable)
 #endif
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+BOOST_CLASS_IMPLEMENTATION(ParticleMagnetodynamicsParameters,
+                           object_serializable)
+#endif
 BOOST_CLASS_IMPLEMENTATION(ParticleProperties, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticlePosition, object_serializable)
 BOOST_CLASS_IMPLEMENTATION(ParticleMomentum, object_serializable)
@@ -799,6 +845,9 @@ BOOST_IS_BITWISE_SERIALIZABLE(EggModelParameters)
 #endif
 #ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
 BOOST_IS_BITWISE_SERIALIZABLE(IdealMagnetizableSuperparamagnetParameters)
+#endif
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+BOOST_IS_BITWISE_SERIALIZABLE(ParticleMagnetodynamicsParameters)
 #endif
 BOOST_IS_BITWISE_SERIALIZABLE(ParticleProperties)
 BOOST_IS_BITWISE_SERIALIZABLE(ParticlePosition)

@@ -100,8 +100,8 @@ class Test(ut.TestCase):
         particles.rotation = (True, True, True)
         for p1, dipm_el in zip(list(particles), dip_mom_list):
             p2 = system.part.add(
-                pos=p1.pos, dip=dipm_el, rotation=[False, False, False],
-                magnetodynamics=self.default_magnetodynamics)
+                pos=p1.pos, dip=dipm_el, rotation=[False, False, False])
+            p2.magnetodynamics.tsw = self.default_magnetodynamics
             p2.vs_auto_relate_to(p1)
             p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
@@ -114,7 +114,7 @@ class Test(ut.TestCase):
 
     def _measure_dipole_moment(self, steps):
         dipm_tot = espressomd.observables.MagneticDipoleMoment(
-            ids=self.system.part.select(lambda p: p.magnetodynamics["is_enabled"]).id)
+            ids=self.system.part.select(lambda p: p.magnetodynamics.tsw["is_enabled"]).id)
         norm = 1 / (self.dip_reduced * self.n_part)
         self.system.integrator.run(steps)
         mag_el = dipm_tot.calculate() * norm

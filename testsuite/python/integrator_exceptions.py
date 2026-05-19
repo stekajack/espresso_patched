@@ -85,29 +85,23 @@ class Test(ut.TestCase):
             p1 = self.system.part.add(pos=p0.pos)
             p1.vs_auto_relate_to(p0)
             p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
-            magnetodynamics = p1.magnetodynamics
             with self.assertRaisesRegex(Exception, "The thermal Stoner-Wohlfarth model requires a thermostat"):
-                magnetodynamics["is_enabled"] = True
-                p1.magnetodynamics = magnetodynamics
+                p1.magnetodynamics.tsw = {"is_enabled": True}
                 self.system.integrator.run(0, recalc_forces=True)
-            magnetodynamics["is_enabled"] = False
-            p1.magnetodynamics = magnetodynamics
+            p1.magnetodynamics.tsw = {"is_enabled": False}
             self.system.integrator.run(0, recalc_forces=True)
         if espressomd.has_features(["EGG_MODEL"]):
             p0 = self.system.part.by_id(0)
             p1 = self.system.part.add(pos=p0.pos, rotation=[True, True, True])
             p1.vs_auto_relate_to(p0)
             p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
-            magnetodynamics = p1.magnetodynamics
             with self.assertRaisesRegex(Exception, "The egg model requires the BD thermostat"):
-                magnetodynamics["is_enabled"] = True
-                p1.magnetodynamics = magnetodynamics
+                p1.magnetodynamics.egg = {"is_enabled": True}
                 self.system.integrator.run(0, recalc_forces=True)
             self.system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
             with self.assertRaisesRegex(Exception, "The VV integrator is incompatible with the currently active combination of thermostats"):
                 self.system.integrator.run(0, recalc_forces=True)
-            magnetodynamics["is_enabled"] = False
-            p1.magnetodynamics = magnetodynamics
+            p1.magnetodynamics.egg = {"is_enabled": False}
             self.system.thermostat.turn_off()
             self.system.integrator.run(0, recalc_forces=True)
         if espressomd.has_features(["IDEAL_MAGNETIZABLE_SUPERPARAMAGNET"]):
@@ -115,13 +109,10 @@ class Test(ut.TestCase):
             p1 = self.system.part.add(pos=p0.pos)
             p1.vs_auto_relate_to(p0)
             p1.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
-            magnetodynamics = p1.magnetodynamics
             with self.assertRaisesRegex(Exception, "The ideal magnetizable superparamagnet model requires a thermostat"):
-                magnetodynamics["is_enabled"] = True
-                p1.magnetodynamics = magnetodynamics
+                p1.magnetodynamics.ideal = {"is_enabled": True}
                 self.system.integrator.run(0, recalc_forces=True)
-            magnetodynamics["is_enabled"] = False
-            p1.magnetodynamics = magnetodynamics
+            p1.magnetodynamics.ideal = {"is_enabled": False}
             self.system.integrator.run(0, recalc_forces=True)
 
     def test_01_statefulness(self):

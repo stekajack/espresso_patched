@@ -22,10 +22,6 @@
 #ifdef ESPRESSO_EGG_MODEL
 
 #include "Particle.hpp"
-#include "PropagationMode.hpp"
-#include "cell_system/CellStructure.hpp"
-#include "errorhandling.hpp"
-#include "integrators/Propagation.hpp"
 #include "random.hpp"
 #include "rotation.hpp"
 #include "system/System.hpp"
@@ -83,34 +79,6 @@ static void egg_model_brownian_rotation(Particle const &p_ref,
     p.vs_relative().quat =
         p.vs_relative().quat * boost::qvm::rot_quat(dphi_u, dphi_m);
     p.quat() = p_ref.quat() * p.vs_relative().quat;
-  }
-}
-
-void System::System::egg_model_sanity_checks() const {
-  for (auto const &p : cell_structure->local_particles()) {
-    using namespace PropagationMode;
-    if (not p.egg_model_is_enabled()) {
-      continue;
-    }
-    if (thermostat->thermo_switch != THERMO_BROWNIAN) {
-      runtimeErrorMsg() << "The egg model requires the BD thermostat";
-      break;
-    }
-    if (propagation->integ_switch != INTEG_METHOD_BD) {
-      runtimeErrorMsg() << "The egg model requires the BD integrator";
-      break;
-    }
-    auto constexpr egg_propagation = TRANS_VS_RELATIVE | ROT_VS_INDEPENDENT;
-    if ((p.propagation() & egg_propagation) != egg_propagation) {
-      runtimeErrorMsg() << "The egg model requires virtual sites with "
-                           "TRANS_VS_RELATIVE and ROT_VS_INDEPENDENT";
-      break;
-    }
-    if (p.vs_relative().to_particle_id == -1) {
-      runtimeErrorMsg() << "The egg model requires a virtual site with "
-                           "a reference particle";
-      break;
-    }
   }
 }
 

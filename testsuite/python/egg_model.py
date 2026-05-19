@@ -135,7 +135,7 @@ class EggModelTest(ut.TestCase):
             yolk.vs_quat = yolk.quat
             yolk.propagation = (Propagation.TRANS_VS_RELATIVE |
                                 Propagation.ROT_VS_INDEPENDENT)
-            yolk.magnetodynamics = {
+            yolk.magnetodynamics.egg = {
                 "is_enabled": True,
                 "gamma": self.egg_gamma,
                 "anisotropy_energy": self.sigma,
@@ -206,15 +206,15 @@ class EggModelTest(ut.TestCase):
     def test_magnetodynamics_property(self):
         self.generate_ensemble(fixed=True)
         p = self.system.part.by_id(1)
-        self.assertEqual(set(p.magnetodynamics.keys()),
+        self.assertEqual(set(p.magnetodynamics.egg.keys()),
                          {"is_enabled", "gamma", "anisotropy_energy",
                           "axis_quat_body", "axis"})
-        self.assertEqual(p.magnetodynamics["is_enabled"], True)
-        self.assertAlmostEqual(p.magnetodynamics["gamma"], self.egg_gamma)
-        self.assertAlmostEqual(p.magnetodynamics["anisotropy_energy"],
+        self.assertEqual(p.magnetodynamics.egg["is_enabled"], True)
+        self.assertAlmostEqual(p.magnetodynamics.egg["gamma"], self.egg_gamma)
+        self.assertAlmostEqual(p.magnetodynamics.egg["anisotropy_energy"],
                                self.sigma)
         np.testing.assert_allclose(
-            np.copy(p.magnetodynamics["axis_quat_body"]),
+            np.copy(p.magnetodynamics.egg["axis_quat_body"]),
             [1., 0., 0., 0.], atol=1e-12)
 
     def test_magnetic_acf_fixed(self):

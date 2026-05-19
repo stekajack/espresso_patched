@@ -19,6 +19,7 @@
 target_sources(
   espresso_core
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/dipoles.cpp
+          ${CMAKE_CURRENT_SOURCE_DIR}/magnetodynamics.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/dipolar_direct_sum.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/egg_model.cpp
           ${CMAKE_CURRENT_SOURCE_DIR}/stoner_wohlfarth_thermal.cpp

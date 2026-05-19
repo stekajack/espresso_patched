@@ -20,6 +20,9 @@
 #include <config/config.hpp>
 
 #include "ParticleHandle.hpp"
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+#include "ParticleMagnetodynamics.hpp"
+#endif
 
 #include "script_interface/Variant.hpp"
 #include "script_interface/cell_system/CellSystem.hpp"
@@ -179,6 +182,21 @@ void ParticleHandle::set_particle_property(T &(Particle::*setter)(),
       [&value, setter](Particle &p) { (p.*setter)() = get_value<T>(value); });
 }
 
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+ObjectRef ParticleHandle::get_magnetodynamics_handle() const {
+  if (not m_magnetodynamics) {
+    auto handle = context()->make_shared(
+        "Particles::ParticleMagnetodynamics", {{"id", m_pid}});
+    auto so = std::dynamic_pointer_cast<ParticleMagnetodynamics>(handle);
+    assert(so != nullptr);
+    so->attach(m_system);
+    m_magnetodynamics = std::move(handle);
+  }
+  return m_magnetodynamics;
+}
+
+#endif
+
 ParticleHandle::ParticleHandle() {
   /* Warning: the order of particle property setters matters! Some properties
    * override each other, e.g. quat/director/dip or dip/dipm.
@@ -274,109 +292,18 @@ ParticleHandle::ParticleHandle() {
        },
        [this]() { return get_particle_data(m_pid).dip_fld(); }},
 #endif
-#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
       {"magnetodynamics",
        [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const dict = get_value<VariantMap>(value);
-           if (dict.contains("is_enabled"))
-             p.stoner_wohlfarth_is_enabled() =
-                 get_value<bool>(dict.at("is_enabled"));
-           if (dict.contains("sw_phi_0"))
-             p.stoner_wohlfarth_phi_0() =
-                 get_value<double>(dict.at("sw_phi_0"));
-           if (dict.contains("sat_mag"))
-             p.saturation_magnetization() =
-                 get_value<double>(dict.at("sat_mag"));
-           if (dict.contains("anisotropy_field_inv"))
-             p.magnetic_anisotropy_field_inv() =
-                 get_value<double>(dict.at("anisotropy_field_inv"));
-           if (dict.contains("anisotropy_energy"))
-             p.magnetic_anisotropy_energy() =
-                 get_value<double>(dict.at("anisotropy_energy"));
-           if (dict.contains("sw_tau0_inv"))
-             p.stoner_wohlfarth_tau0_inv() =
-                 get_value<double>(dict.at("sw_tau0_inv"));
-           if (dict.contains("sw_dt_incr"))
-             p.stoner_wohlfarth_dt_incr() =
-                 get_value<double>(dict.at("sw_dt_incr"));
-         });
+         auto const dict = get_value<VariantMap>(value);
+         auto handle =
+             std::dynamic_pointer_cast<ParticleMagnetodynamics>(
+                 get_magnetodynamics_handle());
+         assert(handle != nullptr);
+         handle->apply_nested_update(dict);
        },
-       [this]() {
-         auto const &p = get_particle_data(m_pid);
-         return VariantMap{
-             {"is_enabled", p.stoner_wohlfarth_is_enabled()},
-             {"sw_phi_0", p.stoner_wohlfarth_phi_0()},
-             {"sat_mag", p.saturation_magnetization()},
-             {"anisotropy_field_inv", p.magnetic_anisotropy_field_inv()},
-             {"anisotropy_energy", p.magnetic_anisotropy_energy()},
-             {"sw_tau0_inv", p.stoner_wohlfarth_tau0_inv()},
-             {"sw_dt_incr", p.stoner_wohlfarth_dt_incr()},
-         };
-       }},
-#endif // ESPRESSO_THERMAL_STONER_WOHLFARTH
-#ifdef ESPRESSO_EGG_MODEL
-      {"magnetodynamics",
-       [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const dict = get_value<VariantMap>(value);
-           if (dict.contains("is_enabled"))
-             p.egg_model_is_enabled() =
-                 get_value<bool>(dict.at("is_enabled"));
-           if (dict.contains("gamma")) {
-             auto const gamma = get_value<double>(dict.at("gamma"));
-             if (gamma <= 0.) {
-               throw std::domain_error(
-                   error_msg("magnetodynamics", "gamma must be a float > 0"));
-             }
-             p.egg_model_gamma() = gamma;
-           }
-           if (dict.contains("anisotropy_energy"))
-             p.egg_model_anisotropy_energy() =
-                 get_value<double>(dict.at("anisotropy_energy"));
-           if (dict.contains("axis_quat_body"))
-             p.egg_model_axis_quat_body() =
-                 get_quaternion_safe("axis_quat_body",
-                                     dict.at("axis_quat_body"));
-         });
-       },
-       [this]() {
-         auto const &p = get_particle_data(m_pid);
-         return VariantMap{
-             {"is_enabled", p.egg_model_is_enabled()},
-             {"gamma", p.egg_model_gamma()},
-             {"anisotropy_energy", p.egg_model_anisotropy_energy()},
-             {"axis_quat_body", quat2vector(p.egg_model_axis_quat_body())},
-             {"axis", p.egg_model_axis()},
-         };
-       }},
-#endif // ESPRESSO_EGG_MODEL
-#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
-      {"magnetodynamics",
-       [this](Variant const &value) {
-         set_particle_property([&value](Particle &p) {
-           auto const dict = get_value<VariantMap>(value);
-           if (dict.contains("is_enabled"))
-             p.ideal_magnetizable_superparamagnet_is_enabled() =
-                 get_value<bool>(dict.at("is_enabled"));
-           if (dict.contains("sat_mag")) {
-             auto const sat_mag = get_value<double>(dict.at("sat_mag"));
-             if (sat_mag <= 0.) {
-               throw std::domain_error(
-                   error_msg("magnetodynamics", "sat_mag must be a float > 0"));
-             }
-             p.saturation_magnetization() = sat_mag;
-           }
-         });
-       },
-       [this]() {
-         auto const &p = get_particle_data(m_pid);
-         return VariantMap{
-             {"is_enabled", p.ideal_magnetizable_superparamagnet_is_enabled()},
-             {"sat_mag", p.saturation_magnetization()},
-         };
-       }},
-#endif // ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+       [this]() -> Variant { return get_magnetodynamics_handle(); }},
+#endif
 #ifdef ESPRESSO_ROTATION
       {"director",
        [this](Variant const &value) {

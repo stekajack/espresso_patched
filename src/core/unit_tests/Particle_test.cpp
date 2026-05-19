@@ -137,6 +137,85 @@ BOOST_AUTO_TEST_CASE(properties_serialization) {
   }
 }
 
+
+#if defined(ESPRESSO_THERMAL_STONER_WOHLFARTH) || defined(ESPRESSO_EGG_MODEL) || defined(ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET)
+namespace Utils {
+template <>
+struct is_statically_serializable<ParticleMagnetodynamicsParameters>
+    : std::true_type {};
+} // namespace Utils
+
+BOOST_AUTO_TEST_CASE(magnetodynamics_properties_serialization) {
+  auto const expected_size =
+      Utils::MemcpyOArchive::packing_size<ParticleMagnetodynamicsParameters>();
+
+  BOOST_CHECK_LE(expected_size, sizeof(ParticleMagnetodynamicsParameters));
+
+  std::vector<char> buf(expected_size);
+
+  auto magnetodynamics = ParticleMagnetodynamicsParameters{};
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+  magnetodynamics.tsw.is_enabled = true;
+  magnetodynamics.tsw.phi0 = 0.25;
+  magnetodynamics.tsw.sat_mag = 1.5;
+  magnetodynamics.tsw.ani_fld_inv = 0.75;
+  magnetodynamics.tsw.ani_energy = 2.5;
+  magnetodynamics.tsw.tau0_inv = 3.5;
+  magnetodynamics.tsw.dt_incr = 4.5;
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+  magnetodynamics.egg.is_enabled = false;
+  magnetodynamics.egg.gamma = 1.25;
+  magnetodynamics.egg.anisotropy_energy = 6.5;
+  magnetodynamics.egg.axis_quat_body = Utils::Quaternion<double>{{1., 2., 3., 4.}};
+  magnetodynamics.egg.axis_quat_space = Utils::Quaternion<double>{{4., 3., 2., 1.}};
+  magnetodynamics.egg.internal_magnetic_torque = {7., 8., 9.};
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+  magnetodynamics.ideal.is_enabled = true;
+  magnetodynamics.ideal.sat_mag = 5.5;
+#endif
+
+  {
+    auto oa = Utils::MemcpyOArchive{buf};
+    oa << magnetodynamics;
+    BOOST_CHECK_EQUAL(oa.bytes_written(), expected_size);
+  }
+
+  {
+    auto ia = Utils::MemcpyIArchive{buf};
+    ParticleMagnetodynamicsParameters out;
+    ia >> out;
+    BOOST_CHECK_EQUAL(ia.bytes_read(), expected_size);
+    BOOST_CHECK_EQUAL(out.enabled_count(), magnetodynamics.enabled_count());
+#ifdef ESPRESSO_THERMAL_STONER_WOHLFARTH
+    BOOST_CHECK_EQUAL(out.tsw.is_enabled, magnetodynamics.tsw.is_enabled);
+    BOOST_CHECK_EQUAL(out.tsw.phi0, magnetodynamics.tsw.phi0);
+    BOOST_CHECK_EQUAL(out.tsw.sat_mag, magnetodynamics.tsw.sat_mag);
+    BOOST_CHECK_EQUAL(out.tsw.ani_fld_inv, magnetodynamics.tsw.ani_fld_inv);
+    BOOST_CHECK_EQUAL(out.tsw.ani_energy, magnetodynamics.tsw.ani_energy);
+    BOOST_CHECK_EQUAL(out.tsw.tau0_inv, magnetodynamics.tsw.tau0_inv);
+    BOOST_CHECK_EQUAL(out.tsw.dt_incr, magnetodynamics.tsw.dt_incr);
+#endif
+#ifdef ESPRESSO_EGG_MODEL
+    BOOST_CHECK_EQUAL(out.egg.is_enabled, magnetodynamics.egg.is_enabled);
+    BOOST_CHECK_EQUAL(out.egg.gamma, magnetodynamics.egg.gamma);
+    BOOST_CHECK_EQUAL(out.egg.anisotropy_energy, magnetodynamics.egg.anisotropy_energy);
+    for (unsigned int i = 0; i < 4; ++i) {
+      BOOST_CHECK_EQUAL(out.egg.axis_quat_body[i], magnetodynamics.egg.axis_quat_body[i]);
+      BOOST_CHECK_EQUAL(out.egg.axis_quat_space[i], magnetodynamics.egg.axis_quat_space[i]);
+    }
+    BOOST_TEST(out.egg.internal_magnetic_torque == magnetodynamics.egg.internal_magnetic_torque,
+               boost::test_tools::per_element());
+#endif
+#ifdef ESPRESSO_IDEAL_MAGNETIZABLE_SUPERPARAMAGNET
+    BOOST_CHECK_EQUAL(out.ideal.is_enabled, magnetodynamics.ideal.is_enabled);
+    BOOST_CHECK_EQUAL(out.ideal.sat_mag, magnetodynamics.ideal.sat_mag);
+#endif
+  }
+}
+#endif
+
 namespace Utils {
 template <>
 struct is_statically_serializable<ParticleForce> : std::true_type {};

@@ -15,9 +15,26 @@ of a single-domain magnetic nanoparticle — it only holds in the limit of
 infinitely high magnetic anisotropy energy.
 In reality, several **internal relaxation mechanisms** exist,
 so the dipole moment is not necessarily co-aligned with the particle quaternion,
-nor does it perfectly follow its motion.
+nor does it perfectly follow its motion. To incorporate this phenomenology in simulations, |es| offers several models, listed below. 
 
-To incorporate this phenomenology in simulations, |es| offers several models, listed below.
+Different particles may use different magnetodynamics schemes in the same simulation, but a given particle can only have one scheme enabled at a time.
+
+.. _Magnetodynamics_Common_Setup:
+
+Common Particle Setup
+---------------------
+
+Magnetodynamics schemes are configured on the virtual particle carrying the dipole moment through the nested ``magnetodynamics`` particle property:
+
+.. code-block:: python
+
+    p_virtual.magnetodynamics.tsw = {...}
+    p_virtual.magnetodynamics.egg = {...}
+    p_virtual.magnetodynamics.ideal = {...}
+
+For all currently implemented schemes, the virtual particle should be related to a reference particle with ``vs_auto_relate_to(...)`` and should use
+``Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT``.
+This lets the dipole moment orientation evolve via the chosen magnetodynamics scheme, rahter then being strictly tied to the reference particle’s quaternion. The forces are still propagated to the reference particle.
 
 .. _Thermal_Stoner_Wohlfarth:
 
@@ -131,7 +148,7 @@ to use the ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
     p2 = system.part.add(pos=p1.pos)
     p2.dip = (1.75,0,0) # set dipole moment for the virtual particle in reduced units
     p2.rotation = (False, False, False) # disable rotations of the virtual site
-    p2.magnetodynamics = {
+    p2.magnetodynamics.tsw = {
       'is_enabled': True,
       'anisotropy_field_inv': 0.175, # inverse anisotropy field (1/H_k) in reduced units
       'sat_mag': 1.75, # saturation magnetisation in reduced units
@@ -143,3 +160,94 @@ to use the ``Propagation.ROT_VS_INDEPENDENT`` propagation mode.
     p2.vs_auto_relate_to(p1)
     p2.propagation = Propagation.TRANS_VS_RELATIVE | Propagation.ROT_VS_INDEPENDENT
 
+
+
+.. _Ideal_Magnetizable_Superparamagnet:
+
+Ideal Magnetizable Superparamagnet
+----------------------------------
+
+.. note::
+
+    Requires features ``IDEAL_MAGNETIZABLE_SUPERPARAMAGNET`` and
+    ``DIPOLES``. In interacting systems, enable ``DIPOLE_FIELD_TRACKING``
+    if the dipolar field acting on the virtual particle should contribute to
+    the internal magnetisation update.
+
+The **ideal magnetizable superparamagnet** scheme models the internal dipole
+moment as an instantaneous Langevin response to the sum of the external field and the tracked dipolar field. It is appropriate for particles without a resolved effective anisotropy barrier. If you use this method in your work, please cite the original publication  :cite:`mostarac2020characterisation`, in addition to |es|.
+
+The only model-specific particle parameter is the saturation magnetisation
+``sat_mag``. The dipole magnitude is obtained from the Langevin function and the
+dipole direction is aligned with the instantaneous effective field.
+
+.. code-block:: python
+
+    import espressomd
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.time_step = 0.001
+
+    p1 = system.part.add(pos=[1, 1, 1], rotation=[False, False, False])
+    p2 = system.part.add(pos=p1.pos, dip=[1.0, 0.0, 0.0],
+                         rotation=[False, False, False])
+    p2.vs_auto_relate_to(p1)
+    p2.propagation = (Propagation.TRANS_VS_RELATIVE |
+                      Propagation.ROT_VS_INDEPENDENT)
+    p2.magnetodynamics.ideal = {
+        'is_enabled': True,
+        'sat_mag': 2.0,
+    }
+
+
+.. _Egg_Model:
+
+Egg Model
+---------
+
+.. note::
+
+    Requires features ``EGG_MODEL``, ``VIRTUAL_SITES_RELATIVE`` and
+    ``DIPOLES``. The scheme is tied to Brownian rotational dynamics: use the
+    Brownian thermostat together with the Brownian dynamics integrator.
+
+The **egg model** describes an internal magnetic rotor inside the reference
+particle. The virtual-site position follows the reference particle, while the
+virtual-site orientation is evolved independently by the egg-model Brownian update. This makes the scheme useful when the internal magnetic relaxation should be resolved explicitly instead of being treated as an instantaneous response or a rare Néel-switching event.
+
+The main model parameters are:
+
+- ``gamma``: rotational friction of the internal magnetic rotor
+- ``anisotropy_energy``: magnetic anisotropy energy
+- ``axis_quat_body``: easy-axis orientation in the body-fixed frame of the
+  reference particle
+
+The getter also exposes ``axis``, the current easy-axis direction in the
+space-fixed frame, which can be useful for validation and debugging.
+
+.. code-block:: python
+
+    import espressomd
+    import espressomd.propagation
+    Propagation = espressomd.propagation.Propagation
+
+    system = espressomd.System(box_l=[10.0, 10.0, 10.0])
+    system.time_step = 0.005
+    system.thermostat.set_brownian(kT=1.0, gamma=1.0, seed=42)
+    system.integrator.set_brownian_dynamics()
+
+    p1 = system.part.add(pos=[1, 1, 1], rotation=[True, True, True],
+                         director=[0.0, 0.0, 1.0])
+    p2 = system.part.add(pos=p1.pos, dip=[1.0, 0.0, 0.0],
+                         rotation=[True, True, True])
+    p2.vs_auto_relate_to(p1)
+    p2.propagation = (Propagation.TRANS_VS_RELATIVE |
+                      Propagation.ROT_VS_INDEPENDENT)
+    p2.magnetodynamics.egg = {
+        'is_enabled': True,
+        'gamma': 1.0,
+        'anisotropy_energy': 4.0,
+        'axis_quat_body': [1.0, 0.0, 0.0, 0.0],
+    }

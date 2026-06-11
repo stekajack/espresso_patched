@@ -29,10 +29,55 @@ from .script_interface import script_interface_register, ScriptInterfaceHelper, 
 from .propagation import Propagation
 
 
-@script_interface_register
-class ParticleMagnetodynamics(ScriptInterfaceHelper):
-    _so_name = "Particles::ParticleMagnetodynamics"
-    _so_checkpointable = False
+class ParticleMagnetodynamics:
+    """Python-side view of per-particle magnetodynamics parameters."""
+
+    _parameters = {
+        "tsw": "_magnetodynamics_tsw",
+        "egg": "_magnetodynamics_egg",
+        "ideal": "_magnetodynamics_ideal",
+    }
+
+    def __init__(self, particle):
+        self._particle = particle
+
+    def _get_model(self, name):
+        parameter = self._parameters[name]
+        if not self._particle._has_parameter(parameter):
+            raise AttributeError(
+                f"Magnetodynamics model '{name}' is not compiled in")
+        return getattr(self._particle, parameter)
+
+    def _set_model(self, name, value):
+        parameter = self._parameters[name]
+        if not self._particle._has_parameter(parameter):
+            raise AttributeError(
+                f"Magnetodynamics model '{name}' is not compiled in")
+        setattr(self._particle, parameter, value)
+
+    @property
+    def tsw(self):
+        return self._get_model("tsw")
+
+    @tsw.setter
+    def tsw(self, value):
+        self._set_model("tsw", value)
+
+    @property
+    def egg(self):
+        return self._get_model("egg")
+
+    @egg.setter
+    def egg(self, value):
+        self._set_model("egg", value)
+
+    @property
+    def ideal(self):
+        return self._get_model("ideal")
+
+    @ideal.setter
+    def ideal(self, value):
+        self._set_model("ideal", value)
 
 
 @script_interface_register
@@ -385,6 +430,10 @@ class ParticleHandle(ScriptInterfaceHelper):
     )
 
     # here we must redefine the script interface setters
+
+    @property
+    def magnetodynamics(self):
+        return ParticleMagnetodynamics(self)
 
     def set_params(self, **kwargs):
         for name, value in kwargs.items():
@@ -895,7 +944,10 @@ class ParticleHandle(ScriptInterfaceHelper):
         self.call_method("rotate_particle", axis=axis, angle=angle)
 
 
-particle_attributes = set(ParticleHandle(id=0)._valid_parameters())
+particle_attributes = {
+    attr for attr in ParticleHandle(id=0)._valid_parameters()
+    if not attr.startswith("_magnetodynamics_")
+}
 if has_features("EXCLUSIONS"):
     particle_attributes.add("exclusions")
 particle_attributes.add("bonds")
